@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GMVC: Jasmine Test Runner</title>
+  <link rel="stylesheet" type="text/css" href="vendors/jasmine-1.2.0/jasmine.css">
+  <script type="text/javascript" src="vendors/jasmine-1.2.0/jasmine.js"></script>
+  <script type="text/javascript" src="vendors/jasmine-1.2.0/jasmine-html.js"></script>
+  <script type="text/javascript" src="vendors/sinon-1.4.2/sinon.js"></script>
+  <script type="text/javascript" src="vendors/jasmine-sinon/jasmine-sinon.js"></script>
+   <script type="text/javascript" src="vendors/exubu-matchers/exb-matchers.js"></script>
+
+  <script src="vendors/jquery.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../src/gclass.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../src/pubsub.js" type="text/javascript" charset="utf-8"></script>
+   <script src="../src/model.js" type="text/javascript" charset="utf-8"></script>
+
+  <script src="specs/class.js" type="text/javascript" charset="utf-8"></script>
+  <script src="specs/model.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+
+  <script type="text/javascript">
+    jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
+    jasmine.getEnv().execute();
+  </script>
+</body>
+</html>

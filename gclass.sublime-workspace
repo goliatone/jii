@@ -1,0 +1,869 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"names",
+				"namespace"
+			],
+			[
+				"call",
+				"callback"
+			],
+			[
+				"pro",
+				"proxy"
+			],
+			[
+				"config",
+				"config_path"
+			],
+			[
+				"exis",
+				"exists"
+			],
+			[
+				"exi",
+				"exists"
+			],
+			[
+				"__",
+				"__class__"
+			],
+			[
+				"if",
+				"ifmain	if __name__ == '__main__'"
+			],
+			[
+				"icons",
+				"icons/lightning_clear"
+			],
+			[
+				"id",
+				"ID"
+			],
+			[
+				"v",
+				"VERSION"
+			],
+			[
+				"Scri",
+				"SCRIPT"
+			],
+			[
+				"CF",
+				"CFBundleIdentifier"
+			],
+			[
+				"CFB",
+				"CFBundleGetInfoString"
+			],
+			[
+				"CB",
+				"CFBundleName"
+			],
+			[
+				"edit",
+				"editor"
+			],
+			[
+				"edi",
+				"editor"
+			],
+			[
+				"sub",
+				"subl"
+			],
+			[
+				"clip",
+				"clipboard"
+			],
+			[
+				"shel",
+				"shell_command"
+			],
+			[
+				"pa",
+				"pargs"
+			],
+			[
+				"json",
+				"json_string"
+			],
+			[
+				"proto",
+				"prototype"
+			],
+			[
+				"uplo",
+				"uploaded_image_url"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "decorator.js",
+			"settings":
+			{
+				"buffer_size": 5496,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "utils.js",
+			"settings":
+			{
+				"buffer_size": 689,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "pubsub.js",
+			"settings":
+			{
+				"buffer_size": 1114,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "model.js",
+			"settings":
+			{
+				"buffer_size": 609,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/emilianoburgos/Downloads/rlayte-mvc.js-ca1f3d0/src/mvc.js",
+			"settings":
+			{
+				"buffer_size": 12594,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "/**\n * A simple JavaScript class system\n *\n * @author     James Brumond\n * @version    0.1.6\n * @copyright  Copyright 2011 James Brumond\n * @license    Dual licensed under MIT and GPL\n */\n(function() {\n    var _global = this;\n	var namespace = _global;\n\n//	----------------------------------------------------------------------------\n//	The class constructor\n	var createClass = function(name, parent, mixins, constructor) {\n\n		// If an array was given for a name, we only want the\n		// actual name value\n		if (typeof name === 'object' && name) {\n			name = name[1] || false;\n			if (! name) {\n				throw new TypeError('Invalid class name value');\n			}\n		}\n\n		// Default the parent to the global Object\n		if (! parent) {\n			parent = Object;\n		}\n\n		// The actual constructor function\n		var self = function() {\n			var inst = this;\n			if (! inst instanceof self) {\n				throw new Error('Classes should be called with the new keyword.');\n			}\n			// If a function was given as the constructor, it should\n			// be called every time a new instance is created\n			if (typeof constructor === 'function') {\n				constructor.apply(inst, arguments);\n			}\n			// If a construct() method exists, it should also be called\n			if (typeof inst.construct === 'function') {\n				inst.construct.apply(inst, arguments);\n			}\n		};\n\n		// Fetch the parent if a string is given\n		if (typeof parent === 'string') {\n			parent = namespace[parent];\n		}\n\n		// Inherit from the parent if one was given (inheritence model\n		// based roughly on CoffeeScript classes)\n		var _super = parent.prototype;\n		for (var i in parent) {\n			if (parent.hasOwnProperty(i)) {\n				self[i] = parent[i];\n			}\n		}\n		var ctor = function() {\n			this.constructor = self;\n		};\n		ctor.prototype = parent.prototype;\n		self.prototype = new ctor();\n\n		// Inherit from mixins\n		if (mixins) {\n			for (var i = 0, c = mixins.length; i < c; i++) {\n				if (typeof mixins[i] === 'string') {\n					mixins[i] = namespace[mixins[i]];\n				}\n				mixins[i].mixinTo(self);\n			}\n		}\n\n		// The class/parent name\n		self.prototype.__class__  = self.__class__  = name;\n		self.prototype.__parent__ = self.__parent__ = parent.__class__ || getNativeClassName(parent);\n		self.prototype.__mixins__ = self.__mixins__ = mixins;\n\n		// Expose the parent\n		self.prototype.parent = self.parent = _super;\n\n		// For super/parent scoping\n		self.prototype.__scope__ = self;\n\n		// If an object was given as the constructor, the properties\n		// should be placed on the prototype\n		if (typeof constructor === 'object') {\n			for (var i in constructor) {\n				self.prototype[i] = constructor[i];\n				// Build a parent method on all class methods that will allow\n				// calling supers with this.method.parent(this, ...)\n				if (isFunc(self.prototype[i])) {\n					(function(method) {\n						self.prototype[method].parent = function(that) {\n							var scope = that.__scope__;\n							var args = Array.prototype.slice.call(arguments, 1);\n							that.__scope__ = that.__scope__.parent;\n							var result = scope.parent[method].apply(that, args);\n							that.__scope__ = scope;\n							return result;\n						};\n						self.prototype[method].parentApply = function(that, args) {\n							args = Array.prototype.slice.call(args, 0);\n							args.unshift(that);\n							self.prototype[method].parent.apply(that, args);\n						};\n					}(i));\n				}\n			}\n		}\n\n	// ----------------------------------------------------------------------------\n	//  Create the external functions\n\n		/**\n		 * Extend the current class\n		 *\n		 * @access  public\n		 * @param   string    the class name\n		 * @param   function  the constructor function\n		 * @return  void\n		 */\n		self.extend = function(name, constructor) {\n			Class(name, self, constructor);\n		};\n\n		/**\n		 * Create a new instance of the class\n		 *\n		 * @access  public\n		 * @return  object\n		 */\n		self.create = function() {\n			return new self();\n		};\n\n		/**\n		 * A toString method that identifies this as a class\n		 */\n		self.toString = function() {\n			return '[object Class]';\n		};\n\n		return self;\n	};//End crateClass\n\n// ----------------------------------------------------------------------------\n//  Used for the extends() and uses() syntax\n\n	var TempClass = function(name) {\n		this.parent = null;\n		this.mixins = [ ];\n		this.uses = function(mixins, constructor) {\n			this.mixins.push.apply(this.mixins, mixins);\n			if (constructor) {\n				return assignTo(name,\n					createClass(name, this.parent, this.mixins, constructor)\n				);\n			}\n			return this;\n		};\n		this.extends = function(parent, constructor) {\n			this.parent = parent;\n			if (constructor) {\n				return assignTo(name,\n					createClass(name, this.parent, this.mixins, constructor)\n				);\n			}\n			return this;\n		};\n	};\n\n// ----------------------------------------------------------------------------\n//  Main Functions\n\n	function Class(name, parent, constructor) {\n		if (arguments.length <= 1) {\n			if (name && (typeof name === 'object' || isFunc(name))) {\n				return createClass(null, null, name);\n			}\n			return new TempClass(name);\n		} else if (arguments.length === 2) {\n			return assignTo(name,\n				createClass(name, null, [ ], parent)\n			);\n		}\n		return assignTo(name,\n			createClass(name, parent, [ ], constructor)\n		);\n	}\n\n	Class.mixin = function(name, constructor) {\n		if (arguments.length === 1) {\n			constructor = name;\n			name = null;\n		}\n		return assignTo(name, new Mixin(constructor));\n	};\n\n	Class.namespace = function(ns) {\n		namespace = ns ? ns : _global;\n	};\n\n	function Mixin(constructor) {\n		this.mixinTo = function(func) {\n			for (var i in constructor) {\n				if (constructor.hasOwnProperty(i)) {\n					func.prototype[i] = constructor[i];\n				}\n			}\n		};\n	}\n\n// ----------------------------------------------------------------------------\n//  Helper functions\n\n	var toString = Object.prototype.toString;\n\n	function isFunc(value) {\n		return (toString.call(value) === '[object Function]');\n	}\n\n	function assignTo(name, constructor) {\n		if (! name) {\n			return constructor;\n		} else if (typeof name === 'object' && name.length === 2) {\n			name[0][name[1]] = constructor;\n		} else if (typeof name === 'string') {\n			namespace[name] = constructor;\n		} else {\n			throw new TypeError('Invalid class/mixin name value');\n		}\n	}\n\n	function getNativeClassName(constructor) {\n		return toString.call(new constructor()).slice(8, -1);\n	}\n\n// ------------------------------------------------------------------\n//  Expose\n\n	try {\n		module.exports.Class = Class;\n	} catch (e) {\n		_global.Class = Class;\n	}\n\n}).call();\n\n/* End of file class.js */\n\n// A general animal class\nClass('Animal', {\n\n    construct: function(name) {\n        this.name = name;\n    },\n\n    makeNoise: function(noise) {\n        console.log(noise);\n    }\n\n});\n\n// Create a class for making people\nClass('Person').extends('Animal', {\n\n    speak: function(sayWhat) {\n        this.makeNoise(this.name + ' says: \"' + sayWhat + '\"');\n    },\n    toString:function(){\n        return this.__class__\n    }\n\n});\n\n// Create an instance of our person class\nvar james = new Person('James');\n\n// And make them talk\njames.speak('Hello, World');\nconsole.log(james.toString())",
+			"settings":
+			{
+				"buffer_size": 7097,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "//= require <jquery>\n\nvar SuperClass = function(parent){\n  var result = function(){\n    this.init.apply(this, arguments);\n  };\n\n  result.prototype.init = function(){};\n\n  if (parent){\n    for(var i in parent){\n      result[i] = SuperClass.clone(parent[i]);\n    }\n    for(var i in parent.prototype){\n      result.prototype[i] = SuperClass.clone(parent.prototype[i]);\n    }\n    result._super = parent;\n    result.prototype._super = parent.prototype;\n  }\n\n  result.fn = result.prototype;\n\n  result.extend = function(obj){\n    var extended = obj.extended;\n    for(var i in obj){\n      result[i] = obj[i];\n    }\n    if (extended) extended(result)\n  };\n\n  result.include = function(obj){\n    var included = obj.included;\n    for(var i in obj){\n      result.fn[i] = obj[i];\n    }\n    if (included) included(result)\n  };\n  \n  result.proxy = function(func){\n    var thisObject = this;\n    return(function(){\n      return func.apply(thisObject, arguments);\n    });\n  }\n  result.fn.proxy = result.proxy;\n\n  result.fn._class = result;\n\n  return result;\n};\n\nSuperClass.clone = function(obj){\n  if (typeof obj == \"function\") return obj;\n  if (typeof obj != \"object\") return obj;\n  if (jQuery.isArray(obj)) return jQuery.extend([], obj);\n  return jQuery.extend({}, obj);\n};\n\nvar ORM = SuperClass();\nORM.include({id:NaN,init:function(){console.log('ORM')}});\nvar User = SuperClass(ORM);\nUser.include({\n    name:'',\n    lastname:'',\n    init:function(){\n        this._super.init();    \n        console.log('User ',arguments);\n    }\n    \n});\n\nvar pepe = new User({name:'Pepe',lastname:'Rone'});\nconsole.log(pepe)\n",
+			"file": "superclass.js",
+			"file_size": 1258,
+			"file_write_time": 1348953087000000,
+			"settings":
+			{
+				"buffer_size": 1595,
+				"line_ending": "Unix",
+				"name": "//= require <jquery>"
+			}
+		},
+		{
+			"contents": "//Shim: https://github.com/kriskowal/es5-shim\n(function(module){\n    var Class = function(parent){\n        \n    	var klass = function(){\n            console.log('Calling new on klass ', this);               \n			this.init.apply(this, arguments);\n		};\n        \n		//Change klass proto.\n		if(parent){\n			for( var i in parent){\n				klass[i] = Class.clone(parent[i]);\n			}\n			for(var i in parent.prototype){\n				klass.prototype[i] = Class.clone(parent.prototype[i]);\n			}\n            \n			klass._super = parent;\n           \n            \n			var SubClass = function(){};\n			SubClass.prototype = parent.prototype; \n			klass.prototype = new SubClass();\n            \n            //We need to create super after proto.\n            klass.prototype._super = parent.prototype;\n		}\n		\n    \n    //------------------------------\n	// Adding class/static properties: i.e: User.findByPk().\n		klass.extend = function(obj){\n			var extended = obj.extended;\n			for(var i in obj){\n				if(obj.hasOwnProperty(i))\n					klass[i] = obj[i];\n			}\n\n			if(extended) extended(klass);\n		};\n    //  ----------------------------------- \n	//  Adding instance properties- user.id = 23;\n		klass.include = function(obj){\n			var included = obj.included;\n			for(var i in obj){\n				if(obj.hasOwnProperty(i))\n					klass.fn[i] = obj[i];\n			}\n			if(included) included(klass);\n		};\n\n		//Proxy, used to set scope.\n		klass.proxy = function(func){\n			var self = this;\n			return(function(){\n				return func.apply(self, arguments);\n			});\n		};\n        \n		//shortcuts.\n		klass.fn = klass.prototype;\n		klass.fn.parent = klass;\n		klass.fn.proxy = klass.proxy;\n        klass.fn._class = klass;\n        \n        //define default constructor, we could rename it.\n        klass.prototype.init = function(){};\n		\n		return klass;\n	};\n    \n	Class.decorator = function(implementation){\n        var decorator = function(){};\n        decorator.prototype.decorate = function(){\n            var i = 0,\n            t = arguments.length;\n            for(;i < t; i++){\n               implementation( arguments[i], this );\n            }		\n		}\n        return new decorator();\n    };\n    \n	Class.override = function(obj, method, fn){\n		obj.parent = obj.parent || {};\n		obj.parent[method] = obj[method];\n		obj[method] = fn;\n	};\n    \n    Class.clone = function(obj){\n        if (typeof obj == \"function\") return obj;\n        if (typeof obj != \"object\") return obj;\n        if (jQuery.isArray(obj)) return jQuery.extend([], obj);\n        return jQuery.extend({}, obj);  \n    };\n	//This should work\n    module = module || this;\n    module.Class = Class;\n\n}).call(this);\n	\nvar Domesticated = Class.decorator(function(obj, decorator){\n    // Override the instance' scare method\n    Class.override(obj,'scare', function(){\n    	this.parent.scare();\n    	console.log(\"Dont scare\")\n    });\n\n    // Add a method\n    obj.kneel = function(){};\n\n    // Bind some custom events\n    if(window.hasOwnProperty('$'))\n        $(obj).on('barking', function() {});\n});\n\nvar ORM = Class();\nORM._name = 'ORM';\nORM.include({init:function(){console.log('ORM construxtor')}});\n\nvar Model = Class(ORM);\nModel._name = 'Model';\n\nModel.include({\n    name:'',\n    lastname:'',\n    age:0,\n    init:function(name, lastname, age){\n        this._super.init();\n        this.name = name;\n        this.lastname = lastname;\n        this.age = age;\n        console.log('User constructor'); \n    },\n    fullName:function(){\n        return this.name+\" \"+this.lastname;\n    },\n    toString:function(){\n        return '[User: name->'+this.name+', lastname->'+this.lastname+', age->'+this.age+']';\n    }\n});\nvar user = new Model(\"Pepe\",\"Rone\",23);\n//user.name = \"Pepe\";\n//user.lastname = 'Rone';\n//user.age = 31;\nconsole.log(user.toString());\nconsole.log(user._class.toString());",
+			"settings":
+			{
+				"buffer_size": 3757,
+				"line_ending": "Unix",
+				"name": "//Shim: https://github.com/kriskowal/es5-shim"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 87.0,
+		"selected_items":
+		[
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"installe",
+				"Package Control: Install Package"
+			],
+			[
+				"package",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 494.0
+	},
+	"console":
+	{
+		"height": 125.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/emilianoburgos/Development/www/test/shopping_cart/shopping_cart.js",
+		"/Users/emilianoburgos/Library/Application Support/Sublime Text 2/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/emilianoburgos/Library/Application Support/Sublime Text 2/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/emilianoburgos/Development/PYTHON/cement/lib/clirecorder.py",
+		"/Users/emilianoburgos/Development/PYTHON/cement/.notes/Testing.txt",
+		"/Users/emilianoburgos/Development/PYTHON/cement/menuicon/notable.py",
+		"/Users/emilianoburgos/Development/PYTHON/cement/.notes/TODO.txt",
+		"/Users/emilianoburgos/Development/PYTHON/cement/.notes/Notable.txt",
+		"/Users/emilianoburgos/Development/PYTHON/cement/myapp.py",
+		"/Users/emilianoburgos/Development/PYTHON/cement/notes/Hola.txt",
+		"/Users/emilianoburgos/Development/PYTHON/cement/lib/note.py",
+		"/Users/emilianoburgos/Development/www/color-companion.com/app/controller/Clients.js",
+		"/Users/emilianoburgos/Development/www/color-companion.com/app/view/Main.js",
+		"/Users/emilianoburgos/Development/www/color-companion.com/app/view/ClientDetails.js",
+		"/Users/emilianoburgos/Development/www/color-companion.com/app/view/Clients.js",
+		"/Users/emilianoburgos/Development/www/color-companion.com/app/view/ClientsList.js",
+		"/Users/emilianoburgos/Development/www/color-companion.com/app/store/Clients.js",
+		"/Users/emilianoburgos/Development/www/color-companion.com/app/model/Client.js",
+		"/Users/emilianoburgos/Development/www/color-companion.com/app/controller/data/clients.js",
+		"/Users/emilianoburgos/Development/www/darknessmap/server.php",
+		"/Users/emilianoburgos/Development/www/color-companion.com/service/webapp/protected/commands/shell/CreateUnitTestCommand.php",
+		"/Users/emilianoburgos/Development/www/darknessmap/output.json",
+		"/Users/emilianoburgos/Development/DZDB/.gitignore",
+		"/Users/emilianoburgos/Development/www/color-companion.com/.gitignore",
+		"/Users/emilianoburgos/Development/www/color-companion.com/service/.htaccess",
+		"/Users/emilianoburgos/Development/www/color-companion.com/service/.gitignore",
+		"/Users/emilianoburgos/Development/www/test/TestingBrunch/package.json",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/18_address_contact.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/16_website_contact.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/15_phone_contact.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/14_contact_contact_type.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/12_address_contact.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/13_email_contact.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/11_contact.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/10_website.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/9_email.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/8_address.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/7_phone.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/6_contact_type.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/5_addrress_type.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/4_email_type.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/3_phone_type.sql",
+		"/Users/emilianoburgos/Development/DZDB/webapp/protected/data/sql_data/2_region.sql",
+		"/Users/emilianoburgos/Development/www/phpword/src/ZipArchive.php",
+		"/Users/emilianoburgos/Development/www/gRouter/grouter.js",
+		"/Users/emilianoburgos/Development/www/gRouter/test/UrlSpec.js",
+		"/Users/emilianoburgos/Downloads/aop.js",
+		"/Users/emilianoburgos/Downloads/UploaderBehavior.php",
+		"/Users/emilianoburgos/Development/www/duck-puncher/index.html",
+		"/Users/emilianoburgos/Desktop/gRouter/README.md",
+		"/Users/emilianoburgos/Downloads/pivotal-jasmine-06c900a/lib/jasmine-core/example/SpecRunner.html",
+		"/Users/emilianoburgos/Desktop/README.md",
+		"/Users/emilianoburgos/Desktop/grouter.js",
+		"/Users/emilianoburgos/Desktop/duck-puncher/index.html",
+		"/Users/emilianoburgos/Downloads/initializr-verekia-3.0/index.html",
+		"/Users/emilianoburgos/Desktop/duck-puncher/duck-puncher.js",
+		"/Users/emilianoburgos/Desktop/duck-puncher.js",
+		"/Users/emilianoburgos/Library/Application Support/Sublime Text 2/Packages/User/Preferences.sublime-settings",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/4Panel.php",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/4PanelW.php",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/tearSheet.php",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/invoice.php",
+		"/Users/emilianoburgos/Downloads/myExport-2.doc",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/8x10Transparency.php",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/4x5Transparency.php",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/contactLetter.php",
+		"/Users/emilianoburgos/Downloads/myExport-3.doc",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/mailingHouseOneColumn.php",
+		"/Users/emilianoburgos/Development/www/gagosian-db/webapp/themes/gg/views/templates/docgen/mailingHouseTwoColumn.php",
+		"/Users/emilianoburgos/Downloads/myExport-1.doc",
+		"/Users/emilianoburgos/Downloads/xupload-v0.4+demo/protected/config/main.php",
+		"/Users/emilianoburgos/Downloads/xupload-v0.4+demo/protected/views/site/index.php",
+		"/Users/emilianoburgos/Downloads/xupload-v0.4+demo/protected/controllers/SiteController.php",
+		"/Users/emilianoburgos/Development/hatemap/sencha/touch/examples/forms/app.js",
+		"/Users/emilianoburgos/Development/hatemap/sencha/touch/examples/kiva/app/controller/Loans.js",
+		"/Users/emilianoburgos/Development/hatemap/sencha/touch/examples/kiva/app/view/LoanFilter.js",
+		"/Users/emilianoburgos/Development/hatemap/sencha/touch/examples/kiva/app/view/Main.js",
+		"/Users/emilianoburgos/Development/hatemap/sencha/touch/examples/oreilly/app.js",
+		"/Users/emilianoburgos/Development/hatemap/sencha/app/view/HateDetails.js",
+		"/Users/emilianoburgos/Development/hatemap/sencha/index.html",
+		"/Users/emilianoburgos/Development/hatemap/sencha/touch/examples/oreilly/app/util/Proxy.js",
+		"/Users/emilianoburgos/Development/hatemap/sencha/touch/examples/oreilly/app/view/tab/Location.js",
+		"/Users/emilianoburgos/Development/hatemap/sencha/app/view/template/Hate.js",
+		"/Users/emilianoburgos/Desktop/simplenso/index.html",
+		"/Users/emilianoburgos/Desktop/simplenso/css/themes/default.css",
+		"/Users/emilianoburgos/Desktop/simplenso/grid.html",
+		"/Users/emilianoburgos/Desktop/simplenso/css/simplenso.css",
+		"/Users/emilianoburgos/Development/DZDB/webapp/index.php",
+		"/opt/local/apache2/htdocs/phpmyadmin/config.inc.php",
+		"/Users/emilianoburgos/Desktop/simplenso/forms.html",
+		"/opt/local/apache2/htdocs/phpmyadmin/config.sample.inc.php",
+		"/Users/emilianoburgos/Development/DZDB/webapp/inde.php"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+			".",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"prototype[i] =",
+			"module",
+			"klass",
+			"};",
+			"createClass\n",
+			"create\n",
+			"    \n",
+			"    	\n",
+			"super+up",
+			"_line",
+			"config_path",
+			"Test",
+			"Testing",
+			")))",
+			"load",
+			"load_entry_point",
+			"AIRApp_16.png",
+			"self.save",
+			"Contact",
+			"icon",
+			"\n				",
+			"				\n",
+			"_ofn",
+			"_afterThrow\n",
+			"uploadSavedPathAttributes\n",
+			"\n",
+			"uniform",
+			"ckeditor",
+			"datepicker",
+			"short_open_tag",
+			"short_tag_open",
+			"hatemap",
+			"spinner",
+			"onContactSelect",
+			"showContactDetails",
+			"showContacts",
+			"user"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"namespace",
+			"self",
+			"TestNote",
+			"LoremIpsumNote",
+			"Testing",
+			"cg-deck",
+			"showHateDetail",
+			"showHates"
+		],
+		"reverse": true,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "decorator.js",
+					"settings":
+					{
+						"buffer_size": 5496,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								608,
+								608
+							]
+						],
+						"settings":
+						{
+							"annotations":
+							[
+								"TODO",
+								"README",
+								"FIXME"
+							],
+							"csslint_options":
+							{
+								"adjoining-classes": "warning",
+								"box-model": true,
+								"box-sizing": "warning",
+								"compatible-vendor-prefixes": "warning",
+								"display-property-grouping": true,
+								"duplicate-background-images": "warning",
+								"duplicate-properties": true,
+								"empty-rules": true,
+								"errors": true,
+								"fallback-colors": "warning",
+								"floats": "warning",
+								"font-faces": "warning",
+								"font-sizes": "warning",
+								"gradients": "warning",
+								"ids": "warning",
+								"import": "warning",
+								"important": "warning",
+								"known-properties": true,
+								"outline-none": "warning",
+								"overqualified-elements": "warning",
+								"qualified-headings": "warning",
+								"regex-selectors": "warning",
+								"rules-count": "warning",
+								"shorthand": "warning",
+								"star-property-hack": "warning",
+								"text-indent": "warning",
+								"underscore-property-hack": "warning",
+								"unique-headings": "warning",
+								"universal-selector": "warning",
+								"vendor-prefix": true,
+								"zero-units": "warning"
+							},
+							"gjslint_ignore":
+							[
+								110.0
+							],
+							"gjslint_options":
+							[
+							],
+							"javascript_linter": "jshint",
+							"jshint_options":
+							{
+								"browser": true,
+								"evil": true,
+								"regexdash": true,
+								"sub": true,
+								"trailing": true,
+								"wsh": true
+							},
+							"pep8": true,
+							"pep8_ignore":
+							[
+								"E501"
+							],
+							"perl_linter": "perlcritic",
+							"pyflakes_ignore":
+							[
+							],
+							"pyflakes_ignore_import_*": true,
+							"sublimelinter": true,
+							"sublimelinter_delay": 2.0,
+							"sublimelinter_disable":
+							[
+							],
+							"sublimelinter_executable_map":
+							{
+							},
+							"sublimelinter_fill_outlines": false,
+							"sublimelinter_gutter_marks": false,
+							"sublimelinter_mark_style": "outline",
+							"sublimelinter_notes": false,
+							"sublimelinter_objj_check_ascii": false,
+							"sublimelinter_popup_errors_on_save": false,
+							"sublimelinter_syntax_map":
+							{
+								"Python Django": "python",
+								"Ruby on Rails": "ruby"
+							},
+							"sublimelinter_wrap_find": true,
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 2930.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "utils.js",
+					"settings":
+					{
+						"buffer_size": 689,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								689,
+								689
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "pubsub.js",
+					"settings":
+					{
+						"buffer_size": 1114,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								29,
+								29
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "model.js",
+					"settings":
+					{
+						"buffer_size": 609,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								232,
+								232
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/Users/emilianoburgos/Downloads/rlayte-mvc.js-ca1f3d0/src/mvc.js",
+					"settings":
+					{
+						"buffer_size": 12594,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								364,
+								364
+							]
+						],
+						"settings":
+						{
+							"annotations":
+							[
+								"TODO",
+								"README",
+								"FIXME"
+							],
+							"csslint_options":
+							{
+								"adjoining-classes": "warning",
+								"box-model": true,
+								"box-sizing": "warning",
+								"compatible-vendor-prefixes": "warning",
+								"display-property-grouping": true,
+								"duplicate-background-images": "warning",
+								"duplicate-properties": true,
+								"empty-rules": true,
+								"errors": true,
+								"fallback-colors": "warning",
+								"floats": "warning",
+								"font-faces": "warning",
+								"font-sizes": "warning",
+								"gradients": "warning",
+								"ids": "warning",
+								"import": "warning",
+								"important": "warning",
+								"known-properties": true,
+								"outline-none": "warning",
+								"overqualified-elements": "warning",
+								"qualified-headings": "warning",
+								"regex-selectors": "warning",
+								"rules-count": "warning",
+								"shorthand": "warning",
+								"star-property-hack": "warning",
+								"text-indent": "warning",
+								"underscore-property-hack": "warning",
+								"unique-headings": "warning",
+								"universal-selector": "warning",
+								"vendor-prefix": true,
+								"zero-units": "warning"
+							},
+							"gjslint_ignore":
+							[
+								110.0
+							],
+							"gjslint_options":
+							[
+							],
+							"javascript_linter": "jshint",
+							"jshint_options":
+							{
+								"browser": true,
+								"evil": true,
+								"regexdash": true,
+								"sub": true,
+								"trailing": true,
+								"wsh": true
+							},
+							"pep8": true,
+							"pep8_ignore":
+							[
+								"E501"
+							],
+							"perl_linter": "perlcritic",
+							"pyflakes_ignore":
+							[
+							],
+							"pyflakes_ignore_import_*": true,
+							"sublimelinter": true,
+							"sublimelinter_delay": 2.0,
+							"sublimelinter_disable":
+							[
+							],
+							"sublimelinter_executable_map":
+							{
+							},
+							"sublimelinter_fill_outlines": false,
+							"sublimelinter_gutter_marks": false,
+							"sublimelinter_mark_style": "outline",
+							"sublimelinter_notes": false,
+							"sublimelinter_objj_check_ascii": false,
+							"sublimelinter_popup_errors_on_save": false,
+							"sublimelinter_syntax_map":
+							{
+								"Python Django": "python",
+								"Ruby on Rails": "ruby"
+							},
+							"sublimelinter_wrap_find": true,
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 5450.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 5,
+					"settings":
+					{
+						"buffer_size": 7097,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6205,
+								6205
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 3967.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "superclass.js",
+					"settings":
+					{
+						"buffer_size": 1595,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								542,
+								542
+							]
+						],
+						"settings":
+						{
+							"auto_name": "//= require <jquery>",
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 500.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"settings":
+					{
+						"buffer_size": 3757,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								671,
+								671
+							]
+						],
+						"settings":
+						{
+							"auto_name": "//Shim: https://github.com/kriskowal/es5-shim",
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 34.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.514266990931,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 241.0
+	},
+	"output.git":
+	{
+		"height": 118.0
+	},
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 201.0,
+	"status_bar_visible": true
+}
