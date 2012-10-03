@@ -271,11 +271,30 @@
 			if(this.isNewRecord())
 				return this;
 
+			//TODO: load clean.attributes instead.
 			var original =  this.constructor.find(this.id);
 			this.load(original.attributes());
 
 			//If we return this, wouldn't it be the same?
 			return original;
+		},
+		save:function(options){
+			options = options || {};
+
+			//Validate unless told not to.
+			if(options.validate !== false){
+				if(this.isInvalid())
+					this.publish('error',options);
+			}
+
+			this.publish('beforeSave');
+
+			var action = this.isNewRecord() ? 'create' : 'update';
+			var record = this[action](options);
+
+			this.publish('save', options);
+
+			return record;
 		},
 		create:function(options){
 			options = options || {};
@@ -309,24 +328,6 @@
 			this.publish('change:update',options);
 
 			return clone;
-		},
-		save:function(options){
-			options = options || {};
-
-			//Validate unless told not to.
-			if(options.validate !== false){
-				if(this.isInvalid())
-					this.publish('error',options);
-			}
-
-			this.publish('beforeSave');
-
-			var action = this.isNewRecord() ? 'create' : 'update';
-			var record = this[action](options);
-
-			this.publish('save', options);
-
-			return record;
 		},
 		destroy:function(options){
 			options = options || {};
