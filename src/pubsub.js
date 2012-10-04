@@ -22,6 +22,7 @@
             topic.push(callback);
             return this;
 		},
+		//TODO: Add 'all' support.
 		publish:function(){
 			//Turn args obj into real array
 			var args = this._slice.call(arguments, 0);

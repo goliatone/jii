@@ -9,24 +9,189 @@
         return new Func();
     };
 
+    var _isEmpty = function(obj){
+        if(!obj) return true;
+        if('length' in obj && obj.length === 0) return true;
+        var key;
+        for(key in obj) {
+            if (obj.hasOwnProperty(key)) return false;
+        }
+        return true;
+
+    };
+
     var _isFunc = function(obj){
-    	return (typeof obj === 'function');
+        return (typeof obj === 'function');
     };
 
     var _isArray = function(value) {
         return Object.prototype.toString.call(value) === '[object Array]';
     };
-
+    
+    var _getKeys = function(o){
+        if (o !== Object(o)) return null;
+        var ret=[],p;
+        for(p in o) if(Object.prototype.hasOwnProperty.call(o,p)) ret.push(p);
+        return ret;
+    };
     var _result = function(obj, property){
-    	if (obj == null) return null;
-    	var value = obj[property];
-    	return _isFunc(value) ? value.call(obj) : value;
+        if(obj == null) return null;
+        var value = obj[property];
+        return _isFunc(value) ? value.call(obj) : value;
     };
 
     var _capitalize =function(str){
-    	return str.charAt(0).toUpperCase() + str.slice(1);
+        return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
+    var _map = function(fun /*, thisp*/)
+	{
+        var len = this.length;
+        if (typeof fun != "function")
+          throw new TypeError();
+
+        var res = new Array(len);
+        var thisp = arguments[1];
+        for (var i = 0; i < len; i++)
+        {
+          if (i in this)
+            res[i] = fun.call(thisp, this[i], i, this);
+        }
+
+        return res;
+    };
+
+    var _merge = function(a, b){
+        for(var p in b) a[p] = b[p];
+        return a;
+    };
+
+    var _intersect = function(a,b){
+        a.filter(function(n){
+            return (b.indexOf(n) !== -1);}
+        );
+    };
+
+    var Validator = Class('Validator').extend({
+        defaultOptions:{
+            message:Validator.defaultMessage,
+            skipOnError:false,
+            on:[]
+        },
+        createValidator:function(attributes, name, method, options){
+            var ctor = this.prototype.constructor;
+
+            options = _merge(ctor.defaultOptions, (options || {}));
+
+            if(!method && (_isFunc(ctor[name])) )
+                method = ctor[name];
+
+            if(method && !_isFunc(method) && _isFunc(method[nane]))
+                method = method[name];
+
+            if(this.validators[name]) return this.validators[name];
+            
+            var makeAttributeArray = function(attributes){
+                if(typeof attributes === 'string'){
+                    attributes = attributes.split(',').map(String.trim);
+                }
+                return attributes;
+            };
+            attributes = makeAttributeArray(attributes);
+
+            var validator = function(){
+                var self  = this;
+                self.name = name;
+                self.attributes = attributes;
+                self.message = options.message;
+                self.skipOnError = options.skipOnError;
+
+                self.validatesAttribute = function(attr){
+                    return self.attributes.indexOf(attr) != -1;
+                };
+                self.applyTo = function(scenario){
+                    return true;
+                };
+                self.validate = function(scope){
+                    var args = Array.prototype.slice.call(arguments,1);
+                    //self.ensureArguments(method, args );
+                    var validates = method.apply(scope, args);
+                    console.log(this)
+                    //we need to add the error:
+                    //if(!validates) this.errors = 23;
+                    return validates;
+                };
+            };
+            this.validators[name] = new validator();
+            return this.validators[name];
+        },
+        
+        setMessage:function(validator, message){
+            var msgs = (this.messages || (this.messages = {}));
+            msgs[validator] = message;
+        },
+        getMessage:function(validator){
+            //TODO: We need to replace values in msg {attribute} etc.
+            return msgs[validator] || this.defaultMessage;
+        }
+
+    });
+    Validator.length = function(attribute, value){
+        //
+        return this[attribute].length === value;
+    };
+    Validator.range = function(attribute, min, max){
+        //
+    };
+    Validator.numerical = function(attribute){
+        //
+        return ! isNaN(this[attribute]);
+    };
+
+    Validator.type = function(attribute, value){
+        //
+    };
+
+    Validator.required = function(attribute){
+        //
+        return !_isEmpty(this[attribute]);
+    };
+
+    Validator.match = function(attribute, match){
+        //
+    };
+
+    Validator.email = function(attribute){
+        //
+    };
+
+    Validator.url = function(attribute){
+        //
+    };
+
+    Validator.compare = function(attribute, value){
+        //
+    };
+
+    Validator.$in = function(attribute,match){
+        //
+    };
+
+    Validator.$default = function(attribute,value){
+        //
+    };
+
+    Validator.exists = function(attribute){
+        //
+    };
+
+
+    /**
+     * Model is a glorified Object with pubsub and an interface
+     * to deal with attributes, validation
+     *
+     *
+     */
 	var Model = Class( exportName/*,EventDispatcher*/).extend({
 		records:{},
 		crecords:{},
@@ -130,7 +295,7 @@
 				return ( rvalue === value);
 			});
 		},
-	////////////
+	    ////////////
 		each:function(callback){
 			var r = this.records;
 			var results = [];
@@ -180,7 +345,7 @@
 
 			return result;
 		},
-	////////////
+	    ////////////
 		update:function(id, attrs, options){
 			var record = this.find(id);
 			if(record) record.updateAttributes(atts, options);
@@ -247,12 +412,109 @@
 			return result;
 		}
 	}).include({
+		//TODO: Do we want this on the reset method, what about inheritance.
+		errors:{},
+        validators:{},
+        scenario:null,
 		init:function(attrs){
 			this.modelName = _capitalize(this.__name__);
+            
+            this.clearErrors();
 
             if(attrs) this.load(attrs);
 
             this.guid = this.constructor.guid();
+        },
+    ////////////////////////////////////////////////////////
+    //// VALIDATION
+    ////////////////////////////////////////////////////////
+        validate:function(attributes, options){
+            options = options || {};
+            if(options.clearErrors) this.clearErrors();
+            var validators, validator, prop;
+            validators = this.getValidators();
+
+            //if(this.beforeValidate()) return false;
+            
+            for(prop in validators){
+                validator = validators[prop];
+                //TODO: do we want to register objects or methods?
+                //validator.call(this, attributes);
+                validator.validate(this, attributes);
+            }
+
+            //this.afterValidate();
+
+            return !this.hasErrors();
+        },
+        getValidators:function(attribute){
+            //ensure we have validators.
+            this.getValidatorList();
+            var validators = [];
+            var validator;
+            var scenario = this.getScenario();
+            for(validator in validators){
+                validator = validators[validator];
+                if(validator.applyTo(scenario)){
+                    if(!attribute || validator.validatesAttribute(attribute))
+                        validators.push(validator);
+                }
+            }
+
+            return validators;
+        },
+        getValidatorList:function(){
+            return (this.validators || (this.validators = this.createValidators()));
+        },
+        createValidators:function(){
+            var validators = {};
+            for( var rule in this.rules){
+                rule = this.rules[rule];
+                if(_hasAttributes(rule, 'name', 'attribute')){
+                    //TODO:Figure out how do we store them, and how we access.
+                    validators[rule.attribute] = rule;
+                }
+            }
+
+            return validators;
+        },
+        getScenario:function(){
+            return this.scenario;
+        },
+        setScenario:function(scenario){
+            this.scenario = scenario;
+        },
+        addError:function(attribute, error){
+            var errors = this.errors[attribute] || (this.errors[attribute] = []);
+            errors.push(error);
+        },
+        addErrors:function(errors){
+            var error, attribute;
+            for( attribute in errors){
+                error = errors[attribute];
+                if(_isArray(error)) this.addErrors(error);
+                else this.addError(attribute, error);
+            }
+        },
+        clearErrors:function(attr){
+            if(attr && attr in this.errors) delete this.errors[attr];
+            else this.errors = {};
+        },
+        hasError:function(attribute){
+            return this.errors.hasOwnProperty(attribute);
+        },
+        hasErrors:function(attribute){
+            if(attribute) return this.hasError(attribute);
+            else return _isEmpty(this.errors);
+        },
+        getErrors:function(attribute){
+            var errors;
+            if(attribute) errors = (this.errors[attribute] || []).concat();
+            else errors = _copy(this.errors);
+            return errors;
+        },
+        getError:function(attribute){
+            return this.hasError(attribute) ? this.errors[attribute][0] : void(0);
         },
         /**
          * It will load all values provied in attr object 
@@ -260,10 +522,12 @@
 		 *
 		 */
         load:function(attr){
-        		var key, value, prop;
+            var key, value, prop;
+            // var attributes = this.getAttributeNames();
+            //we need to filter the stuff we load (?)
 			for (key in attr){
 				value = attr[key];
-				_isFunc(this[key]) ? this[key](value) : this[key] = value;
+                _isFunc(this[key]) ? this[key](value) : (this[key] = value);
 			}
 			return this;
         },
@@ -272,8 +536,8 @@
 				return this;
 
 			//TODO: load clean.attributes instead.
-			var original =  this.constructor.find(this.id);
-			this.load(original.attributes());
+			var original =  this.constructor.findByPk(this.id);
+			this.load(original.getAttributes());
 
 			//If we return this, wouldn't it be the same?
 			return original;
@@ -320,7 +584,7 @@
 
 			//TODO: this.collection.get(this.id);
 			var record  = this.constructor.records[this.id];
-			record.load(this.attributes());
+			record.load(this.getAttributes());
 
 			var clone = record.clone();
 
@@ -329,6 +593,7 @@
 
 			return clone;
 		},
+		////////
 		destroy:function(options){
 			options = options || {};
 
@@ -346,7 +611,7 @@
 			return this;
 		},
 		duplicate:function(asNewRecord){
-			var result = new this.constructor(this.attributes());
+			var result = new this.constructor(this.getAttributes());
 
 			if(asNewRecord === false) result.guid = this.guid;
 			else delete result.id;
@@ -357,20 +622,23 @@
 
 			return _createObject(this);
 		},
-		attributes:function(){
-			var key;
-			var attrs = this.constructor.attributes;
+        getAttributeNames:function(){
+            return this.constructor.attributes.concat();
+            //var attrs = this.constructor.attributes;
+            //return _getKeys(attrs);
+        },
+		getAttributes:function(keys){
+			var key, attrs = this.getAttributeNames();
 
+			if(keys && _isArray(keys)) attrs = _intersect(attrs,keys);
 			var i = 0, l = attrs.length, result = {};
-
+			
 			for(; i < l; i++ ){
 				key = attrs[i];
-				if( key in this)
-					result[key] = _result(this, key);
+				if( key in this) result[key] = _result(this, key);
 			}
-
-			if(this.id)
-				result.id = this.id;
+            
+			if(this.id) result.id = this.id;
 
 			return result;
 		},
@@ -380,18 +648,18 @@
 			this[name] = value;
 			
 			//TODO: update:name to follow conventions.
-			this.publish('update'+_capitalize(name),{old:old, value:value},options);
+			this.publish('update:'+name,{old:old, value:value},options);
 
 			return this.save(options);
 		},
 		updateAttributes:function(values, options){
 			//TODO: Should we only do this if we have subscribers?
 			//if(this.willPublish('updateAttributes'))
-			var old = this.attributes();
+			var old = this.getAttributes();
 
 			this.load(values);
 			//TODO: update:all?attributes
-			this.publish('updateAttributes',{old:old, values:values},options);
+			this.publish('update:attributes',{old:old, values:values},options);
 
 			return this.save(options);
 		},
@@ -429,7 +697,7 @@
 		},
 		toJSON:function(){
 
-			return this.attributes();
+			return this.getAttributes();
 		},
 		fromJSON:function(records){
 
@@ -437,17 +705,7 @@
 		}
 	});
 
-	Model.prototype.validate = function(){
-		console.log('Implement validate');
-	};
-
 	Model.prototype.metadata = function(meta){
-
-	};
-
-	
-
-	Model.prototype.errors = function(){
 
 	};
 

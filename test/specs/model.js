@@ -18,7 +18,7 @@ describe("Model", function(){
 	});
 
 	it("should create attributes in model instance",function(){
-		expect(user.attributes()).toMatchObject(attributes);
+		expect(user.getAttributes()).toMatchObject(attributes);
 	});
 
 	it("should load constructor attributes",function(){
@@ -67,10 +67,10 @@ describe("Model", function(){
 
 	it("should be loadable from JSON",function(){
 		user = new User();
-		expect(user.attributes()).toMatchObject({});
+		expect(user.getAttributes()).toMatchObject({});
 		user.fromJSON(attributes);
 		expect(user.toJSON()).toMatchObject(attributes);
-		expect(user.attributes()).toMatchObject(attributes);
+		expect(user.getAttributes()).toMatchObject(attributes);
 	});
 
 	/**
@@ -116,7 +116,7 @@ describe("Model", function(){
 		
 		var options = {options:23};
 
-		user.subscribe('updateAge',spy);
+		user.subscribe('update:age',spy);
 		user.updateAttribute('age', value, options);
 		expect(spy.called).toBeTruthy();
 		var spyArgs = spy.args[0];
