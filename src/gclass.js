@@ -15,8 +15,7 @@
             parent = namespace[parent];
 
         var self = function(){
-        	if("init" in this)
-           	    this.init.apply(this, arguments);
+            if("init" in this) this.init.apply(this, arguments);
         };
 
         //define default constructor. TODO:we could rename it.
@@ -36,7 +35,7 @@
            
             
 			var ctor = function(){
-				this.constructor = self;
+				this.ctor = this.constructor = self;
 			};
 			ctor.prototype = parent.prototype;
 			self.prototype = new ctor();
