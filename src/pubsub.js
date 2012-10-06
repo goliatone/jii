@@ -1,18 +1,29 @@
 (function(namespace,exportName){
 
-    function _publish(list, args){
-        var callback, i, l;
+    function _publish(list, args, options){
+        var event, a, i, l;
         //Invoke callbacks. We need length on each iter
         //cose it could change, unsubscribe.
         for(i = 0, l = list.length; i < l; i++){
-            callback = list[i];
-            if(!callback) continue;
-            if(!callback.apply(this, args)) break;
+            event = list[i];
+            if(!event) continue;
+            // if(args[1])
+            event.options = _merge(event.options,(options || {}));
+            // args;
+            a = ([].concat( args, [event] ));
+            console.log('end a ',a);
+            console.log('str a ',args);
+            // if(!event.callback.apply(event.scope, a)) break;
+            if(!event.callback.apply(event.scope, args)) break;
         }
     }
 
     var _slice = [].slice;
 
+    var _merge = function(a, b){
+        for(var p in b) a[p] = b[p];
+        return a;
+    };
 
     /**
      * PubSub mixin.
@@ -34,19 +45,27 @@
             var topic = (calls[topic])  || (calls[topic] = []);
             //Create an array for the given topic key, unless we have it,
             //then append the callback to the array
-            topic.push(callback);
+            // topic.push(callback);
+            var event = {};
+            event.topic = topic;
+            event.callback = callback;
+            event.scope = scope || this;
+            event.target = this;
+            event.options = options || {};//_merge((options || {}),{target:this});
+
+            topic.push(event);
             return this;
         },
         subscribers:function(topic){
             return this._callbacks.hasOwnProperty(topic) && this._callbacks[topic].length > 0;
         },
         //TODO: Add 'all' support.
-        publish:function(){
+        publish:function(topic, options){
             //Turn args obj into real array
-            var args = _slice.call(arguments, 0);
+            var args = _slice.call(arguments, 1);
 
             //get the first arg, topic name
-            var topic = args.shift();
+            // options = options || {};
 
             var list, all, i, l;
             //return if no callback
@@ -56,13 +75,13 @@
             //if global handlers, append to list.
             //if((all = calls['all'])) list = (list || []).concat(all);
 
-            if((all = calls['all'])) _publish.call(this, all, arguments);
+            if((all = calls['all'])) _publish.call(this, all, _slice.call(arguments, 0), options);
             // if((all = calls['all'])) _publish.call(this, all, [topic].concat(args));
-            if(list) _publish.call(this,list,args);
+            if(list) _publish.call(this,list, args, options);
 
             return this;
         },
-        unsubscribe:function(topic, callback){
+        unsubscribe:function(topic, callback/*, scope*/){
 
             var list, calls, i, l;
 
@@ -70,7 +89,7 @@
             if(!(list  = calls[topic])) return this;
 
             for(i = 0, l = list.length; i < l; i++){
-                if(list[i] === callback) list.splice(i,1);
+                if(list[i].callback === callback) list.splice(i,1);
             }
 
             return this;

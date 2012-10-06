@@ -250,12 +250,13 @@
             this.grecords = {};
         },
         //TODO: HOW DO WE WANT TO HANDLE CLONES AND STORING BY REF?!
-        add:function(record){
+        add:function(record,options){
+            options = options || {};
             //We need to check that record is a model, if not
             //we make it one. Also, if its a model, we need
             //to return the clone or store the clone?!.
 
-            record.subscribe('all',this.proxy(this._handleModel));
+            record.subscribe('all',this._handleModel,this,options);
 
             console.log("Adding record, with id", record.gid);
 
@@ -305,7 +306,7 @@
             return r;
         },
         _handleModel:function(topic,options){
-            console.log('HANDLE FUCKING MODEL: ', topic, options);
+            console.log('HANDLE FUCKING MODEL: ', topic, options, this);
         },
         
     ////////////////////////////////////////////////////////////
