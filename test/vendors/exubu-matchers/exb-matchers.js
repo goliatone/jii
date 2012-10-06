@@ -32,6 +32,20 @@ beforeEach(function() {
       return true;
     },
 
+    toHaveMethods:function(){
+        var actual = this.actual, 
+            hasOwnProperty = {}.hasOwnProperty,
+            prop;
+
+        for (var i = 0, len = arguments.length; i < len; i += 1) {
+            prop = arguments[i];
+            if (!hasOwnProperty.call(actual, prop) 
+                && typeof actual[prop] === 'function') {
+                return false;
+            }
+        }
+        return true;
+    },
     toHaveOwnProperties: function(name0, name1, name2) {
       var actual = this.actual, hasOwnProperty = {}.hasOwnProperty;
       for (var i = 0, len = arguments.length; i < len; i += 1) {

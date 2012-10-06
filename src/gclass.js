@@ -49,16 +49,17 @@
         //self.prototype.init = function(){};
     //------------------------------
 	// Adding class/static properties: i.e: User.findByPk().
-		self.extend = function(obj){
+		self.extend = function(obj, target){
+            target = target || self;
 			var extended = obj.extended;
 			for(var i in obj){
 				if(obj.hasOwnProperty(i))
-					self[i] = obj[i];
+					target[i] = obj[i];
 			}
 
-			if(extended) extended(self);
+			if(extended) extended(target);
             
-            return self;
+            return target;
 		};
     //  ----------------------------------- 
 	//  Adding instance properties- user.id = 23;
