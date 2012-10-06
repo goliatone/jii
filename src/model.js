@@ -253,7 +253,10 @@
         add:function(record){
             //We need to check that record is a model, if not
             //we make it one. Also, if its a model, we need
-            //to return the clone.
+            //to return the clone or store the clone?!.
+
+            record.subscribe('all',this.proxy(this._handleModel));
+
             console.log("Adding record, with id", record.gid);
 
             if(record.id)  this.records[record.id]   = record;
@@ -293,6 +296,7 @@
             var r = this.get(id);
             
             //remove all listeners
+            r.unsubscribe('all',this.proxy(this._handleModel));
 
             //do remove
             delete this.records[r.id];
@@ -300,8 +304,13 @@
 
             return r;
         },
+        _handleModel:function(topic,options){
+            console.log('HANDLE FUCKING MODEL: ', topic, options);
+        },
         
-        ////////////
+    ////////////////////////////////////////////////////////////
+    //// ArrayCollection Stuff.
+    ////////////////////////////////////////////////////////////
         each:function(callback){
             var r = this.records;
             var results = [];
@@ -329,7 +338,7 @@
         count:function(){
             return this.recordsValues().length;
         },
-        ////////////
+    ////////////
         
         toJSON:function(){
             return this.recordsValues();
@@ -382,11 +391,13 @@
             
 
             this.gid = this.ctor.makeGid();
+
+            //We save a copy in static model.
             this.ctor.add(this);
 
         },
     ////////////////////////////////////////////////////////
-    //// VALIDATION
+    //// VALIDATION: Todo, move to it's own module.
     ////////////////////////////////////////////////////////
         validate:function(attributes, options){
             options = options || {};
@@ -551,7 +562,7 @@
             this[name] = value;
 
             //TODO: update:name to follow conventions.
-            this.publish('update:'+name,{old:old, value:value},options);
+            this.publish('update.'+name,{old:old, value:value},options);
 
             return this.save(options);
         },
@@ -562,7 +573,7 @@
 
             this.load(values);
             //TODO: update:all?attributes
-            this.publish('update:attributes',{old:old, values:values},options);
+            this.publish('update.attributes',{old:old, values:values},options);
 
             return this.save(options);
         },
@@ -804,7 +815,6 @@
 
             var clone = record.clone();
             clone.publish('create', options);
-            clone.publish('change:create', options);
 
             this.setScenario('update');
             return clone;
@@ -826,7 +836,6 @@
             var clone = record.clone();
 
             this.publish('update', options);
-            this.publish('change:update',options);
 
             return clone;
         },
@@ -841,7 +850,6 @@
 
             this.destroyed = true;
             this.publish('destroy', options);
-            this.publish('change::destroy', options);
             // this.unbind();
 
             return this;

@@ -117,7 +117,7 @@ describe("Model", function(){
 		
 		var options = {options:23};
 
-		user.subscribe('update:age',spy);
+		user.subscribe('update.age',spy);
 		user.updateAttribute('age', value, options);
 		expect(spy.called).toBeTruthy();
 		var spyArgs = spy.args[0];
@@ -165,10 +165,9 @@ describe("Model", function(){
 	});
 
 	it("User should remove users",function(){
-		console.clear();
 		expect(User.has(user)).toBeTruthy();
 		User.remove(user);
-		// expect(User.has(user)).toBeFalsy();
+		expect(User.has(user)).toBeFalsy();
 	});
 
 });

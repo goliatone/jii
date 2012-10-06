@@ -1,22 +1,37 @@
 (function(namespace,exportName){
+
+    function _publish(list, args){
+        var callback, i, l;
+        //Invoke callbacks. We need length on each iter
+        //cose it could change, unsubscribe.
+        for(i = 0, l = list.length; i < l; i++){
+            callback = list[i];
+            if(!callback) continue;
+            if(!callback.apply(this, args)) break;
+        }
+    }
+
+    var _slice = [].slice;
+
+
     /**
      * PubSub mixin.
+     * TODO: Handle scope!!!
+     * TODO: Handle options!
+     *
      * Use:
      * Class.include(PubSub);
      * If we need more complex stuff:
      * http://amplifyjs.com/api/pubsub/
+     * https://github.com/appendto/amplify/blob/master/core/amplify.core.js
      * https://github.com/mroderick/PubSubJS
      * https://github.com/uxder/Radio/blob/master/radio.js
      */
     var mixPubSub = {
-        _slice: (function(){return [].slice})(),
-        _makeArray:function(args){
-            return this._slice.call(args,0);
-        },
-        subscribe: function(topic, callback){
+        subscribe: function(topic, callback, scope, options){
             //Create _callbacks, unless we have it
             var calls = this._callbacks || (this._callbacks = {});
-            var topic = this._callbacks[topic] || (this._callbacks[topic] = []);
+            var topic = (calls[topic])  || (calls[topic] = []);
             //Create an array for the given topic key, unless we have it,
             //then append the callback to the array
             topic.push(callback);
@@ -28,41 +43,34 @@
         //TODO: Add 'all' support.
         publish:function(){
             //Turn args obj into real array
-            var args = this._slice.call(arguments, 0);
+            var args = _slice.call(arguments, 0);
 
             //get the first arg, topic name
             var topic = args.shift();
 
+            var list, all, i, l;
             //return if no callback
-            var list, calls, i, l;
             if(!(calls = this._callbacks)) return this;
-            if(!(list = this._callbacks[topic])) return this;
+            //get listeners, if none and no global handlers, return.
+            if(!(list = calls[topic]) && !calls['all']) return this;
+            //if global handlers, append to list.
+            //if((all = calls['all'])) list = (list || []).concat(all);
 
-            var callback;
-            //Invoke callbacks. We need length on each iter
-            //cose it could change, unsubscribe. 
-            for(i = 0, l = list.length; i < l; i++){
-                callback = list[i];
-                if(!callback) continue;
-                callback.apply(this, args);
-            }
+            if((all = calls['all'])) _publish.call(this, all, arguments);
+            // if((all = calls['all'])) _publish.call(this, all, [topic].concat(args));
+            if(list) _publish.call(this,list,args);
+
             return this;
         },
         unsubscribe:function(topic, callback){
+
             var list, calls, i, l;
+
             if(!(calls = this._callbacks)) return this;
-            if(!(list = this._callbacks[topic])) return this;
+            if(!(list  = calls[topic])) return this;
 
             for(i = 0, l = list.length; i < l; i++){
-                if(list[i] === callback){
-                    console.log(topic+'==>', list[i]);
-                    console.log(topic+'==>', this._callbacks);
-                    // delete this._callbacks[topic] = null;
-                    list.splice(i,1);
-                    //delete list[i];
-                    // console.log(topic+'==>', this._callbacks);
-                    // console.log(topic+'==>', this._callbacks[topic]);
-                }
+                if(list[i] === callback) list.splice(i,1);
             }
 
             return this;
