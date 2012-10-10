@@ -2154,6 +2154,9 @@ jasmine.Spec = function(env, suite, description) {
   spec.results_ = new jasmine.NestedResults();
   spec.results_.description = description;
   spec.matchersClass = null;
+
+  //add assertion count.
+  // jasmine.Spec.assertionCount = 0;
 };
 
 jasmine.Spec.prototype.getFullName = function() {

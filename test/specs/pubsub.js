@@ -73,11 +73,12 @@ describe("PubSub", function(){
 		item.publish('topic3',options);
 
 		expect(single).toHaveBeenCalledOnce();
-		expect(single).toHaveBeenCalledWith(options);
+		// expect(single).toHaveBeenCalledWith(options);
 
-
+		var callbackArguments = multiple.args[0];
 		expect(multiple).toHaveBeenCalledThrice();
-		expect(multiple.args[0]).toMatchObject(['topic',options]);
+		expect(callbackArguments[0]).toBe('topic');
+		expect(callbackArguments[1]).toHaveProperties('event','options');
 	});
 
 	it("should have a fluid interface",function(){
@@ -92,7 +93,7 @@ describe("PubSub", function(){
 		expect(single).toHaveBeenCalledWith(opt);
 
 		expect(multiple).toHaveBeenCalledThrice();
-		expect(multiple.args[0]).toMatchObject(['t1',opt]);
+		expect(multiple.args[0]).toIncludeObject(['t1',opt]);
 	});
 
 	it("should execute in the context of the publisher",function(){
@@ -106,5 +107,42 @@ describe("PubSub", function(){
 		expect(spy.returned(item)).toBeTruthy();
 	});
 
+	it("shoud include all event props into the options parameter",function(){
+
+		//SHOULD WE MAKE THIS A FEATURE OR A BUG?!
+		
+		var handler = {};
+		handler.onTopic = function(options){
+			handler.id = this.id;
+			options.age++;
+			expect(options.age).toBe(2);
+			return this;
+		};
+		handler.onTopicTwo = function(options){
+			options.age++;
+			expect(options.age).toBe(2);
+		};
+
+		var spy = sinon.spy(handler, 'onTopic');
+
+		item.id = 23;
+		item.subscribe('topic', handler.onTopic);
+		item.subscribe('topic',handler.onTopicTwo);
+
+		item.publish('topic',{age:1});
+
+		expect(spy).toHaveBeenCalledOnce();
+		expect(spy.returned(item)).toBeTruthy();
+		expect(spy.args[0]).toBeTruthy();
+		expect(spy.args[0]).toHaveLength(2);//we have age + event.
+
+		expect(handler.id).toBeTruthy();
+		expect(handler.id).toEqual(item.id);
+		expect(spy.args[0][0]).toHaveProperties('target','event');
+	});
+
+	it("each callback should have a cloned options object",function(){
+		//since js passes the same object arround, it means that 
+	})
 
 });

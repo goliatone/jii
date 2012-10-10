@@ -1,3 +1,16 @@
+/**
+ * We want to track the number of assertions
+ * on the suit.
+ * Check L#543.
+ */
+var _gol = {};
+_gol.assertionCount = 0;
+_gol.expect = jasmine.Spec.prototype.expect;
+jasmine.Spec.prototype.expect = function(actual) {
+  _gol.assertionCount++;
+  return _gol.expect.apply(this, arguments);
+};
+
 jasmine.HtmlReporterHelpers = {};
 
 jasmine.HtmlReporterHelpers.createDom = function(type, attrs, childrenVarArgs) {
@@ -286,6 +299,7 @@ jasmine.HtmlReporterHelpers.addHelpers(jasmine.HtmlReporter);jasmine.HtmlReporte
 
     if (this.failedCount === 0) {
       dom.alert.appendChild(this.createDom('span', {className: 'passingAlert bar'}, "Passing " + specPluralizedFor(this.passedCount)));
+      
     } else {
       showDetails();
     }
@@ -526,7 +540,11 @@ jasmine.TrivialReporter.prototype.reportRunnerResults = function(runner) {
       specCount++;
     }
   }
-  var message = "" + specCount + " spec" + (specCount == 1 ? "" : "s" ) + ", " + results.failedCount + " failure" + ((results.failedCount == 1) ? "" : "s");
+
+  //ALSO MODIFIED THIS.
+  var message = "" + specCount + " spec" + (specCount == 1 ? "" : "s" );
+  message += ", " + _gol.assertionCount + " assertions";
+  message += ", " + results.failedCount + " failure" + ((results.failedCount == 1) ? "" : "s");
   message += " in " + ((new Date().getTime() - this.startedAt.getTime()) / 1000) + "s";
   this.runnerMessageSpan.replaceChild(this.createDom('a', { className: 'description', href: '?'}, message), this.runnerMessageSpan.firstChild);
 

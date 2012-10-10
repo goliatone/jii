@@ -3,7 +3,7 @@ describe("Model", function(){
 	var User, attributes, user;
 
 	beforeEach(function(){
-		//User = Class('User','Model').include(PubSub.mixins['pubsub']);
+		//TODO: WE SHOULD REALLY BE TESTING MODEL, NOT AR!!!
 		User = Class('User','ActiveRecord').include(PubSub.mixins['pubsub']);
 		User.configure({attributes:['id','age','name','lastname']});
 		attributes = {age:32,name:"Pepe",lastname:"Rone"};
@@ -45,8 +45,10 @@ describe("Model", function(){
 	it("should not assing a gid as id on create if none present",function(){
 		var spy = sinon.spy();
 		expect(user.id).toBeFalsy();
+		expect(user.has('id')).toBeFalsy();
+
 		user.create();
-		expect(user.id).toBe(user.gid);
+		// expect(user.id).toBe(user.gid);
 	});
 
 	it("should publish topics on create",function(){
@@ -82,17 +84,18 @@ describe("Model", function(){
 	 * user.name === 'pepe'
 	 */
 	it("should reload an item and reset its state",function(){
-		// user = new User(attributes);
+		var gid = user.gid;
+		expect(user.id).toBeUndefined();
 		expect(user.age).toBe(attributes.age);
 		user.save();
 		user.age = 1;
 		expect(user.age).toBe(1);
 		user.reload();
 		expect(user.age).toBe(attributes.age);
+		expect(user.gid).toBe(gid);
 	});
 
 	it("duplicate should return a record with shared props, but with no id and different gid",function(){
-		// user = new User(attributes);
 		var dup = user.duplicate();
 
 		expect(user.isEqual(dup)).toBeFalsy();
@@ -101,7 +104,6 @@ describe("Model", function(){
 	});
 
 	it("should duplicate a record with same id and gid",function(){
-		// user = new User(attributes);
 		user.id = 1;
 		var dup = user.duplicate(false);
 		expect(user.isEqual(dup)).toBeTruthy();
@@ -109,7 +111,7 @@ describe("Model", function(){
 		expect(dup.gid).toBe(user.gid);
 	});
 
-	it("should publish individual attribute changes",function(){
+	it("should publish individual attribute changes: updateAttribute",function(){
 		var spy = sinon.spy();
 
 		var old = user.age;
@@ -119,11 +121,30 @@ describe("Model", function(){
 
 		user.subscribe('update.age',spy);
 		user.updateAttribute('age', value, options);
+
 		expect(spy.called).toBeTruthy();
 		var spyArgs = spy.args[0];
-		console.log(spyArgs);
-		expect(spyArgs[0]).toMatchObject({old:old,value:value});
-		expect(spyArgs[1]).toMatchObject(options);
+		
+		expect(spyArgs[0]).toIncludeObject({old:old,value:value});
+		expect(spyArgs[1]).toIncludeObject(options);
+	});
+
+	it("should publish individual attribute changes: set",function(){
+		var spy = sinon.spy();
+
+		var old = user.age;
+		var value = 32;
+		
+		var options = {options:23};
+
+		user.subscribe('update.age',spy);
+		user.set('age', value, options);
+
+		expect(spy.called).toBeTruthy();
+		var spyArgs = spy.args[0];
+		
+		expect(spyArgs[0]).toIncludeObject({old:old,value:value});
+		expect(spyArgs[1]).toIncludeObject(options);
 	});
 
 	it("should clone records",function(){
@@ -148,6 +169,11 @@ describe("Model", function(){
 		var user2 = new User();
 		User.add(user2);
 		
+		expect(User.has(user2.gid)).toBeTruthy();
+	});
+
+	it("should be able to add a record form JSON",function(){
+		var user2 = User.add(attributes);
 		expect(User.has(user2.gid)).toBeTruthy();
 	});
 

@@ -4,35 +4,43 @@
         var event, a, i, l;
         //Invoke callbacks. We need length on each iter
         //cose it could change, unsubscribe.
+        // args = _slice.call(arguments, 1);
+        var o;
+        console.log('pp')
         for(i = 0, l = list.length; i < l; i++){
             event = list[i];
             if(!event) continue;
-            // if(args[1])
-            event.options = _merge(event.options,(options || {}));
-            // args;
-            a = ([].concat( args, [event] ));
-            console.log('end a ',a);
-            console.log('str a ',args);
-            // if(!event.callback.apply(event.scope, a)) break;
+            
+            //We want to have a dif. options object
+            //for each callback;
+            console.log('--')
+            
+            options.event  = event;
+            options.target = event.target;//shortcut to access target.
+            // o = $.extend({},options);
+
             if(!event.callback.apply(event.scope, args)) break;
+            // if(!event.callback.apply(event.scope, a)) break;
         }
     }
 
     var _slice = [].slice;
 
     var _merge = function(a, b){
-        for(var p in b) a[p] = b[p];
+        console.log('-----');
+        for(var p in b){console.log(p); a[p] = b[p];}
         return a;
     };
 
     /**
      * PubSub mixin.
-     * TODO: Handle scope!!!
-     * TODO: Handle options!
+     * TODO: Handle scope!!! <= DONE
+     * TODO: Handle options! <= WE NEED TO CLONE THEM!
      *
      * Use:
      * Class.include(PubSub);
      * If we need more complex stuff:
+     * https://github.com/cmndo/PubSub/blob/master/pubsub.js
      * http://amplifyjs.com/api/pubsub/
      * https://github.com/appendto/amplify/blob/master/core/amplify.core.js
      * https://github.com/mroderick/PubSubJS
@@ -51,12 +59,13 @@
             event.callback = callback;
             event.scope = scope || this;
             event.target = this;
-            event.options = options || {};//_merge((options || {}),{target:this});
+            // event.options = options || {};//_merge((options || {}),{target:this});
 
             topic.push(event);
             return this;
         },
         subscribers:function(topic){
+
             return this._callbacks.hasOwnProperty(topic) && this._callbacks[topic].length > 0;
         },
         //TODO: Add 'all' support.
@@ -65,7 +74,11 @@
             var args = _slice.call(arguments, 1);
 
             //get the first arg, topic name
-            // options = options || {};
+            options = options || {};
+
+            //include the options into the arguments, making sure that we
+            //send it along if we just created it here.
+            args.push(options);
 
             var list, all, i, l;
             //return if no callback

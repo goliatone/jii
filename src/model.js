@@ -10,6 +10,7 @@
     };
 
     var _hasOwn = function(scope,prop){
+
        return Object.prototype.hasOwnProperty.call(scope,prop);
     };
 
@@ -19,7 +20,7 @@
             if(obj === '') return true;
             else return false;
         }
-        console.log(obj);
+
         if( obj.hasOwnProperty('length') && obj.length === 0) return true;
         var key;
         for(key in obj) {
@@ -30,10 +31,12 @@
     };
 
     var _isFunc = function(obj){
+
         return (typeof obj === 'function');
     };
 
     var _isArray = function(value) {
+
         return Object.prototype.toString.call(value) === '[object Array]';
     };
     
@@ -76,6 +79,7 @@
     };
 
     var _intersect = function(a,b){
+
         a.filter(function(n){ return (b.indexOf(n) !== -1);});
     };
 
@@ -249,16 +253,98 @@
             this.records = {};
             this.grecords = {};
         },
+        /**
+         * Add a model or a list of models to the collection.
+         *
+         * @access   public
+         * @param    record
+         * @param    options
+         * @return
+         */
         //TODO: HOW DO WE WANT TO HANDLE CLONES AND STORING BY REF?!
         add:function(record,options){
-            options = options || {};
+            options = options || {silent:true};
+
+            var records = _isArray(record) ? record.slice() : [record];
+
+            var i = 0, l = records.length, local;
+            for(;i < l; i++){
+                records[i] = this._prepareModel(records[i],options);
+            }
+
+            i = 0, l = records.length;
+            for(;i < l; i++){
+                record = records[i];
+                local = this.has(record) && this.get(record);
+
+                if(local){
+                    //Do we merge both records?!
+                    if(options.merge && local) local.load(record);
+
+                    //we already have it, remove it
+                    records.splice(i,1);
+
+                    //update index, ensure we loop all!
+                    --i, --l;
+
+                    //and move on
+                    continue;
+                }
+                console.log('Adding ',record.gid);
+                //subscribe to updates
+                record.subscribe('all', this._handleModel, this, options);
+                
+                //save a ref. to the record.
+                this.grecords[record.gid] = record;
+
+                //save a ref to the record. TODO:Should we clone!?
+                if(record.has('id')) this.records[record.id] = record;//.clone();
+            }
+
+            return record;
+
+            /*var records = _isArray(record) ? record.slice() : [record];
+
             //We need to check that record is a model, if not
             //we make it one. Also, if its a model, we need
             //to return the clone or store the clone?!.
+            //If we have objects, make new model instances.
+            var local;
+            var i = 0, l = records.length;
+            for(; i < l; i++){
+                records[i] = this._prepareModel(records[i],options);
+                // else this.notify("add:error",record);
+            }
+           
+            i = 0, l = records.length;
+            for(; i < l; i++){
 
+                record = records[i];
+                local  = record.has('id') && this.records[record.id];
+
+                //if we already have a local copy of the model
+                if(local || this.grecords[record.gid]){
+                    //update our current copy of model.
+                    if(options.merge && local) local.load(record);
+                    console.log('we are here 66666666')
+                    //remove model and move on.
+                    records.splice(i, 1);
+                    continue;
+                }
+
+                //register model updates.
+                record.subscribe('all',this._handleModel,this,options);
+                console.log('Adding fucking record ', record.gid);
+                console.log('Addng id ',record.id);
+                //index instance for lookup, id/gid
+                this.grecords[record.gid] = record;
+
+                if(record.has('id')) this.records[record.id] = record;
+            }
+            return record;*/
+
+            record = this._prepareModel(record, options);
             record.subscribe('all',this._handleModel,this,options);
-
-            console.log("Adding record, with id", record.gid);
 
             if(record.id)  this.records[record.id]   = record;
             if(record.gid) this.grecords[record.gid] = record;
@@ -266,6 +352,17 @@
             //that way we can track changes, i.e add it to the dirty
             //list, if id changes, update
             return record;
+        },
+        _prepareModel: function(attrs, options) {
+            if (attrs instanceof Model) {
+                //if (!attrs.collection) attrs.collection = this;
+                return attrs;
+            }
+            options || (options = {});
+            //options.collection = this;
+            var model = new this.prototype.__class__(attrs, options);
+            //if (!model._validate(model.attributes, options)) return false;
+            return model;
         },
         get:function(id){
             id = this.ensureId(id);
@@ -282,14 +379,26 @@
             if(typeof id === 'object'){
                 if(_hasOwn(id,'id')) id = id.id;
                 else if(_hasOwn(id,'gid') && !onlyId) id = id.gid;
+                else return null;
             }
             return id;
         },
         has:function(id){
+            
+            if(!id) return false;
+
             id = this.ensureId(id);
             
             //how do we want to handle errors!?
             return _hasOwn(this.records,id) || _hasOwn(this.grecords,id);
+        },
+        count:function(gRecords){
+            var t = 0, p,rec;
+            rec = gRecords ? this.grecords : this.records;
+        
+            for(p in rec) t++;
+
+            return t;
         },
         remove:function(id){
             if(!this.has(id)) return null;
@@ -307,6 +416,17 @@
         },
         _handleModel:function(topic,options){
             console.log('HANDLE FUCKING MODEL: ', topic, options, this);
+            switch(topic){
+                case 'create':
+                    //this.add(this);
+                break;
+                case 'remove':
+                break;
+                case 'destroy':
+                    this.remove(options.target.id);
+                break;
+
+            }
         },
         
     ////////////////////////////////////////////////////////////
@@ -336,12 +456,13 @@
             var record = values[values.length - 1];
             return record ? record.clone() : void 0;
         },
-        count:function(){
+        /*count:function(){
             return this.recordsValues().length;
-        },
+        },*/
     ////////////
         
         toJSON:function(){
+
             return this.recordsValues();
         },
         fromJSON:function(objects){
@@ -383,12 +504,12 @@
         errors:{},
         validators:{},
         scenario:null,
-        init:function(attrs){
+        init:function(attrs, options){
             this.modelName = _capitalize(this.__name__);
             
             this.clearErrors();
 
-            if(attrs) this.load(attrs);
+            if(attrs) this.load(attrs,options);
             
 
             this.gid = this.ctor.makeGid();
@@ -506,12 +627,21 @@
         },
         get:function(attribute){
 
+            return this[attribute];
         },
-        set:function(attribute, value){
+        set:function(attribute, value, options){
+            var old = this[attribute];
+            this[attribute] = value;
 
+            //TODO: update:attribute to follow conventions.
+            if(!options || !options.silent )
+                this.publish('update.'+attribute,{old:old, value:value},options);
+
+            return this;
         },
         has:function(attribute){
 
+            return this.hasOwnProperty(attribute);
         },
         setScenario:function(scenario){
             if(!scenario || scenario === this.scenario) return;
@@ -519,6 +649,7 @@
             return this;
         },
         getScenario:function(){
+
             return this.scenario;
         },
         duplicate:function(asNewRecord){
@@ -571,7 +702,6 @@
             //TODO: Should we only do this if we have subscribers?
             //if(this.willPublish('updateAttributes'))
             var old = this.getAttributes();
-
             this.load(values);
             //TODO: update:all?attributes
             this.publish('update.attributes',{old:old, values:values},options);
@@ -645,13 +775,15 @@
 //// ACTIVE RECORD
 /////////////////////////////////////////////////////
     var ActiveRecord = Class('ActiveRecord',Model).extend({
-        update:function(id, attrs, options){
+        update:function(id, attributes, options){
             var record = this.find(id);
-            if(record) record.updateAttributes(atts, options);
+            if(record) record.updateAttributes(attributes, options);
+            else return null;
+
             return record;
         },
-        create:function(attrs, options){
-            var record = new this(atts);
+        create:function(attributes, options){
+            var record = new this(attributes);
             return record.save(options);
         },
         destroy:function(id, options){
@@ -673,11 +805,18 @@
                 return this.publish('fetch', callbackOrParams);
             }
         },
+        find:function(idOrGid){
+            var record = this.records[idOrGid];
+
+            if(!record && this.isGid(idOrGid))
+                return this.findByGid(idOrGid);
+
+            if(!record) return false;
+
+            return record.clone();
+        },
         findByPk:function(id){
             var record = this.records[id];
-
-            if(!record && this.isGid(id))
-                return this.findByGid(id);
 
             if(!record) return false;
 
@@ -704,8 +843,8 @@
             var i = 0, l = records.length;
             for(; i < l; i++){
                 record = records[i];
-                record.id || (record.id = record.gid);
-                this.records[record.id] = record;
+                //record.id || (record.id = record.gid);
+                if(record['id'] )this.records[record.id] = record;
                 this.grecords[record.gid] = record;
             }
 
@@ -721,13 +860,13 @@
                     if(filter(record))
                         results.push(record);
                 }
-                return records;
+                return results;
             }).call(this);
 
             return this.clonesArray(result);
         },
-        findByAttribute:function(attr, value){
-            var r = this.records;
+        findByAttribute:function(attr, value, grecords){
+            var r = grecords? this.grecords : this.records;
             var record, id, rvalue;
             for( id in r){
                 record = r[id];
@@ -738,9 +877,9 @@
 
             return null;
         },
-        findAllByAttribute:function(name, value){
+        findAllByAttribute:function(name, value, options){
             return this.select(function(item){
-                var rvalue = _result(item, attr);
+                var rvalue = _result(item, name);
                 return ( rvalue === value);
             });
         },
@@ -774,11 +913,12 @@
          *
          */
         reload:function(){
-            if(this.isNewRecord())
-                return this;
+            //Not really, we still want to get original src.
+            // if(this.isNewRecord()) return this;
 
             //TODO: load clean.attributes instead.
-            var original =  this.constructor.findByPk(this.id);
+            //We need to use gid, since id might not be set.
+            var original =  this.constructor.findByGid(this.gid);
             this.load(original.getAttributes());
 
             //If we return this, wouldn't it be the same?
@@ -806,13 +946,14 @@
             options = options || {};
             this.publish('beforeCreate',options);
 
-            if(!this.id) this.id = this.gid;
+            // if(!this.id) this.id = this.gid;
 
             var record = this.duplicate(false);
 
             //TODO: this.collection.add(this.id)
-            this.constructor.records[this.id]    = record;
+            if(this.has('id')) this.constructor.records[this.id]    = record;
             this.constructor.grecords[this.gid] = record;
+            // this.constructor.add(this);
 
             var clone = record.clone();
             clone.publish('create', options);
@@ -844,18 +985,23 @@
             options = options || {};
 
             this.publish('beforeDestroy', options);
+            if(options.skipDestroy) return this;
 
-            //TODO: Move into ModelCollection.
-            delete this.constructor.records[this.id];
-            delete this.constructor.grecords[this.gid];
-
-            this.destroyed = true;
             this.publish('destroy', options);
+            this.destroyed = true;
             // this.unbind();
 
             return this;
         }
     });
+    
+/////////////////////////////////////////////////////
+//// SYNC LAYER
+/////////////////////////////////////////////////////
+    var syncMixin = {
+        
+    };
+/////////////////////////////////////////////////////
 
 
     namespace['Validator'] = Validator;
