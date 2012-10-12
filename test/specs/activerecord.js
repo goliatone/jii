@@ -1,10 +1,11 @@
 describe("ActiveRecord", function(){
 	console.clear();
-	var User, records, models;
+	var User, records, models, xhr;
 
 	beforeEach(function(){
 		//User = Class('User','Model').include(PubSub.mixins['pubsub']);
-		User = Class('User','ActiveRecord').include(PubSub.mixins['pubsub']);
+		var pubsub = PubSub.mixins['pubsub'];
+		User = Class('User','ActiveRecord').include(pubsub);
 		User.configure({attributes:['id','age','name','lastname']});
 		models = [
 			{id:1,name:'Pepe',lastname:'Rone',age:31},
@@ -18,6 +19,10 @@ describe("ActiveRecord", function(){
 			{name:'Mortadelo',lastname:'Two',age:51},
 			{name:'Filemon',lastname:'Three',age:21}
 		];
+	});
+
+	afterEach(function(){
+		if(xhr) xhr.restore();
 	});
 
 	it("should register a set of records", function(){
@@ -167,4 +172,53 @@ describe("ActiveRecord", function(){
 		expect(user.gid).toEqual(user2.gid);
 		expect(callback).toHaveBeenCalled();
 	});
+
+////////////////////////////////////////////
+	it("should sync with server: fetch",function(){
+		xhr = sinon.useFakeXMLHttpRequest();
+        requests = [];
+		xhr.onCreate = function (req) { requests.push(req); };
+
+		var users = User.fetch();
+		
+		// expect(requests.length).toBe(1);
+		expect(requests[0].url).toMatchObject('/api/user');
+	});
+
+	it("should sync with server: create",function(){
+		xhr = sinon.useFakeXMLHttpRequest();
+        requests = [];
+		xhr.onCreate = function (req) { requests.push(req); };
+
+		var user = User.create(records[0]);
+		user.save();
+		expect(requests.length).toBe(1);
+		expect(requests[0].url).toMatchObject('/api/user/create');
+	});
+
+	it("should sync with server: update",function(){
+		xhr = sinon.useFakeXMLHttpRequest();
+        requests = [];
+		xhr.onCreate = function (req) { requests.push(req); };
+
+		var user = User.create(models[0]);
+		user.age = 99;
+		user.save();
+		expect(requests.length).toBe(1);
+		expect(requests[0].url).toMatchObject('/api/user/update/id/'+user.id);
+	});
+
+	it("should sync with server: delete",function(){
+		console.log('*****************************');
+		xhr = sinon.useFakeXMLHttpRequest();
+        requests = [];
+		xhr.onCreate = function (req) { requests.push(req); };
+
+		var user = User.add(models[0]);
+		// user.destroy();
+		expect(requests.length).toBe(1);
+		expect(requests[0].url).toMatchObject('/api/user/delete/id/'+user.id);
+	});
+
+
 });

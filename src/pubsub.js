@@ -6,14 +6,12 @@
         //cose it could change, unsubscribe.
         // args = _slice.call(arguments, 1);
         var o;
-        console.log('pp')
         for(i = 0, l = list.length; i < l; i++){
             event = list[i];
             if(!event) continue;
             
             //We want to have a dif. options object
             //for each callback;
-            console.log('--')
             
             options.event  = event;
             options.target = event.target;//shortcut to access target.
@@ -27,7 +25,6 @@
     var _slice = [].slice;
 
     var _merge = function(a, b){
-        console.log('-----');
         for(var p in b){console.log(p); a[p] = b[p];}
         return a;
     };

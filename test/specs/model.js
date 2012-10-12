@@ -4,7 +4,10 @@ describe("Model", function(){
 
 	beforeEach(function(){
 		//TODO: WE SHOULD REALLY BE TESTING MODEL, NOT AR!!!
-		User = Class('User','ActiveRecord').include(PubSub.mixins['pubsub']);
+		var pubsub = PubSub.mixins['pubsub'];
+		User = Class('User','ActiveRecord').include(pubsub);
+		
+
 		User.configure({attributes:['id','age','name','lastname']});
 		attributes = {age:32,name:"Pepe",lastname:"Rone"};
 		user = new User(attributes);
@@ -90,7 +93,7 @@ describe("Model", function(){
 		user.save();
 		user.age = 1;
 		expect(user.age).toBe(1);
-		user.reload();
+		user.restore();
 		expect(user.age).toBe(attributes.age);
 		expect(user.gid).toBe(gid);
 	});

@@ -83,6 +83,10 @@
         a.filter(function(n){ return (b.indexOf(n) !== -1);});
     };
 
+    var _firstToLowerCase = function(str){
+        return str.charAt(0).toLowerCase() + str.slice(1);
+    };
+
 /////////////////////////////////////////////////////
 //// VALIDATOR
 /////////////////////////////////////////////////////
@@ -215,15 +219,14 @@
         records:{},
         grecords:{},
         attributes:[],
-        
+        extended:function(self){
+            self.dispacher = new self();
+            self.reset();
+        },
         configure: function(config){
             this.attributes = config.attributes;
             // this.unbind();
         },
-        /*extended:function(self){
-            console.log("Extended");
-            this.reset();
-        },*/
         clonesArray:function(array){
             var value;
             var i = 0, l = array.length;
@@ -250,8 +253,9 @@
             return (gid === '00000000-0000-0000-0000-000000000000');
         },
         reset:function(options){
-            this.records = {};
-            this.grecords = {};
+            this.records    = {};
+            this.grecords   = {};
+            this.attributes = [];
         },
         /**
          * Add a model or a list of models to the collection.
@@ -290,10 +294,13 @@
                     //and move on
                     continue;
                 }
-                console.log('Adding ',record.gid);
+                
                 //subscribe to updates
                 record.subscribe('all', this._handleModel, this, options);
                 
+                //Nofity we are adding the record.
+                // this.dispacher.publish('added', record);
+
                 //save a ref. to the record.
                 this.grecords[record.gid] = record;
 
@@ -301,53 +308,6 @@
                 if(record.has('id')) this.records[record.id] = record;//.clone();
             }
 
-            return record;
-
-            /*var records = _isArray(record) ? record.slice() : [record];
-
-            //We need to check that record is a model, if not
-            //we make it one. Also, if its a model, we need
-            //to return the clone or store the clone?!.
-            //If we have objects, make new model instances.
-            var local;
-            var i = 0, l = records.length;
-            for(; i < l; i++){
-                records[i] = this._prepareModel(records[i],options);
-                // else this.notify("add:error",record);
-            }
-           
-            i = 0, l = records.length;
-            for(; i < l; i++){
-
-                record = records[i];
-                local  = record.has('id') && this.records[record.id];
-
-                //if we already have a local copy of the model
-                if(local || this.grecords[record.gid]){
-                    //update our current copy of model.
-                    if(options.merge && local) local.load(record);
-                    console.log('we are here 66666666')
-                    //remove model and move on.
-                    records.splice(i, 1);
-                    continue;
-                }
-
-                //register model updates.
-                record.subscribe('all',this._handleModel,this,options);
-                console.log('Adding fucking record ', record.gid);
-                console.log('Addng id ',record.id);
-                //index instance for lookup, id/gid
-                this.grecords[record.gid] = record;
-
-                if(record.has('id')) this.records[record.id] = record;
-            }
-            return record;*/
-
-            record = this._prepareModel(record, options);
-            record.subscribe('all',this._handleModel,this,options);
-
-            if(record.id)  this.records[record.id]   = record;
-            if(record.gid) this.grecords[record.gid] = record;
             //should we register for all updates on model?!
             //that way we can track changes, i.e add it to the dirty
             //list, if id changes, update
@@ -408,6 +368,10 @@
             //remove all listeners
             r.unsubscribe('all',this.proxy(this._handleModel));
 
+            //Nofity we are removing the record.
+            // this.dispacher.publish('removed', r);
+
+
             //do remove
             delete this.records[r.id];
             delete this.grecords[r.gid];
@@ -415,7 +379,6 @@
             return r;
         },
         _handleModel:function(topic,options){
-            console.log('HANDLE FUCKING MODEL: ', topic, options, this);
             switch(topic){
                 case 'create':
                     //this.add(this);
@@ -619,11 +582,31 @@
             var key, value, prop;
             // var attributes = this.getAttributeNames();
             //we need to filter the stuff we load (?)
+
+            //TODO: Should we validate?!
             for (key in attr){
                 value = attr[key];
                 _isFunc(this[key]) ? this[key](value) : (this[key] = value);
             }
             return this;
+        },
+        /**
+         * Repopulates the record with the latest data.
+         * It's an asynchronous mehtod.
+         *
+         *
+         */
+        restore:function(){
+            //Not really, we still want to get original src.
+            // if(this.isNewRecord()) return this;
+
+            //TODO: load clean.attributes instead.
+            //We need to use gid, since id might not be set.
+            var original =  this.constructor.findByGid(this.gid);
+            this.load(original.getAttributes());
+
+            //If we return this, wouldn't it be the same?
+            return original;
         },
         get:function(attribute){
 
@@ -633,7 +616,11 @@
             var old = this[attribute];
             this[attribute] = value;
 
-            //TODO: update:attribute to follow conventions.
+            //TODO: We should store changes and mark fields 
+            //as dirty. (?)
+
+            //TODO: We should handle validation here as well.
+
             if(!options || !options.silent )
                 this.publish('update.'+attribute,{old:old, value:value},options);
 
@@ -773,8 +760,85 @@
     };
 /////////////////////////////////////////////////////
 //// ACTIVE RECORD
+//// relational: https://github.com/lyonbros/composer.js/blob/master/composer.relational.js
 /////////////////////////////////////////////////////
     var ActiveRecord = Class('ActiveRecord',Model).extend({
+        extended:function(){
+            //This works OK, it gets called just after it
+            //has been extended.
+            //this.reset();
+            this.stores = [];
+        },
+////////////////////////////////////////////////////////////////////////
+//////// PERHAPS MOVE THIS INTO A STORE IMP.?
+//////// WE CAN HAVE LOCALSTORE, RESTSTORE, ETC...
+////////////////////////////////////////////////////////////////////////
+        parseUrl:function( template, data){
+            function replaceFn() {
+                var prop = arguments[1];
+                return (prop in data) ? data[prop] : '';
+            }
+            return template.replace(/\{(\w+)\}/g, replaceFn);
+        },
+        sync:function(action, model, options){
+            options = options || {};
+
+            console.log('SYNC: called with arguments: ',arguments, new Date().valueOf());
+            var actionMap = {};
+            actionMap['create'] = {
+                url:'/api/{model}/{action}',
+                type:'POST'
+            };
+            actionMap['read']   = {
+                url:'/api/{model}',
+                type:'GET'
+            };
+            actionMap['update'] = {
+                url:'/api/{model}/{action}/id/{id}',
+                type:'POST'
+            };
+            actionMap['destroy'] = {
+                url:'/api/{model}/{action}/id/{id}',
+                type:'GET'
+            };
+
+
+            var data = {model:null, action:action,id:model.id};
+            data.model = _firstToLowerCase(model.modelName);
+
+            var url = this.parseUrl(actionMap[action].url, data);
+
+            switch(action){
+                case 'create':
+                    //
+
+                break;
+
+                case 'read':
+                    //
+                break;
+
+                case 'update':
+                    //
+                break;
+
+                case 'delete':
+                    //
+                break;
+
+                default:
+                    return;
+
+            }
+
+            $.ajax({
+                url:url,
+                type:actionMap[action].type,
+                success:options.success,
+                error:function(){console.log('error');}
+            });
+            
+        },
         update:function(id, attributes, options){
             var record = this.find(id);
             if(record) record.updateAttributes(attributes, options);
@@ -783,7 +847,12 @@
             return record;
         },
         create:function(attributes, options){
+            options = options || {};
             var record = new this(attributes);
+            //Perhaps, instead of save, we need to load
+            //the attributes, we dont want to trigger an
+            //update/create here!
+            options.skipSync = true;
             return record.save(options);
         },
         destroy:function(id, options){
@@ -793,17 +862,19 @@
         },
         change:function(callbackOrParams){
             if(_isFunc(callbackOrParams)){
-                return this.bind('change', callbackOrParams);
+                // return this.bind('change', callbackOrParams);
             } else {
-                return this.publish('change', callbackOrParams);
+                // return this.publish('change', callbackOrParams);
             }
         },
-        fetch:function(callbackOrParams){
-            if(_isFunc(callbackOrParams)){
-                return this.bind('fetch', callbackOrParams);
-            } else {
-                return this.publish('fetch', callbackOrParams);
-            }
+        fetch:function(options, callbackOrParams){
+            this.sync('read', new this(),options);
+            // if(_isFunc(callbackOrParams)){
+            //     // return this.bind('fetch', callbackOrParams);
+            // } else {
+
+            //     //return this.publish('fetch', callbackOrParams);
+            // }
         },
         find:function(idOrGid){
             var record = this.records[idOrGid];
@@ -828,9 +899,10 @@
             return record.clone();
         },
         exists:function(id){
+
             return this.findByPk(id) !== false;
         },
-        refresh:function(values, options){
+        reload:function(values, options){
             options = options || {};
 
             if(options.clear) this.reset();
@@ -848,7 +920,7 @@
                 this.grecords[record.gid] = record;
             }
 
-            this.publish('refresh', this.clonesArray(records));
+            this.publish('reload', this.clonesArray(records));
             return this;
         },
         select:function(filter){
@@ -906,27 +978,30 @@
             return result;
         }
     }).include({
-        /**
-         * Repopulates the record with the latest data.
-         * It's an asynchronous mehtod.
-         *
-         *
-         */
-        reload:function(){
-            //Not really, we still want to get original src.
-            // if(this.isNewRecord()) return this;
+        sync:function(){
+            this.ctor.sync.apply(this.ctor, arguments);
+        },
+        
+        refresh:function(){
 
-            //TODO: load clean.attributes instead.
-            //We need to use gid, since id might not be set.
-            var original =  this.constructor.findByGid(this.gid);
-            this.load(original.getAttributes());
+        },
+        fetch:function(options){
+            options = options || {};
+            var model = this;
+            var successCallback = options.success;
+            options.success = function(resp, status, xhr){
+                //handle response data
+                model.load(resp);
+                if(successCallback) successCallback(model, resp, options);
+            };
 
-            //If we return this, wouldn't it be the same?
-            return original;
+            this.sync('read',this, options);
+
+            return this;
         },
         save:function(options){
             options = options || {};
-
+            console.log('=============== SAVE');
             //Validate unless told not to.
             if(options.validate !== false){
                 if(this.isInvalid())
@@ -958,6 +1033,9 @@
             var clone = record.clone();
             clone.publish('create', options);
 
+            console.log('::::::::::::::::::::::::::::::: ', arguments.callee.caller);
+            if(options.skipSync) this.sync('create', this, options);
+
             this.setScenario('update');
             return clone;
         },
@@ -977,6 +1055,8 @@
 
             var clone = record.clone();
 
+            if(options.skipSync) this.sync('update',this, options);
+
             this.publish('update', options);
 
             return clone;
@@ -986,6 +1066,14 @@
 
             this.publish('beforeDestroy', options);
             if(options.skipDestroy) return this;
+
+            var model = this;
+            var successCallback = options.success;
+            options.success = function(resp){
+                if(successCallback) successCallback(model, resp, options);
+            };
+
+            this.sync('destroy', this, options);
 
             this.publish('destroy', options);
             this.destroyed = true;
@@ -998,9 +1086,27 @@
 /////////////////////////////////////////////////////
 //// SYNC LAYER
 /////////////////////////////////////////////////////
-    var syncMixin = {
-        
-    };
+    var LocalStore = Class('LocalStore').include({
+        id:'LocalStore',
+        handleModels:function(topic, options){
+            console.log('*****************************************');
+            switch(topic){
+                case 'update':
+                    console.log('We have update: id ',options.target.id);
+                break;
+                case 'create':
+                    console.log('We have create: gid ',options.target.gid);
+                break;
+                case 'delete':
+                    console.log('We have delete: ', options.target.id);
+                break;
+                case 'find':
+                break;
+            }
+            console.log('*****************************************');
+        }
+    });
+    namespace['LocalStore'] = LocalStore;
 /////////////////////////////////////////////////////
 
 
