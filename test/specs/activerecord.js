@@ -1,6 +1,5 @@
 describe("ActiveRecord", function(){
-	console.clear();
-	var User, records, models, xhr;
+	var User, records, models, xhr, server;
 
 	beforeEach(function(){
 		//User = Class('User','Model').include(PubSub.mixins['pubsub']);
@@ -19,6 +18,8 @@ describe("ActiveRecord", function(){
 			{name:'Mortadelo',lastname:'Two',age:51},
 			{name:'Filemon',lastname:'Three',age:21}
 		];
+
+		server = sinon.fakeServer.create();
 	});
 
 	afterEach(function(){
@@ -182,7 +183,8 @@ describe("ActiveRecord", function(){
 		var users = User.fetch();
 		
 		// expect(requests.length).toBe(1);
-		expect(requests[0].url).toMatchObject('/api/user');
+		expect(requests[0].method).toMatchObject('GET');
+		expect(requests[0].url).toMatchObject('/api/user/');
 	});
 
 	it("should sync with server: create",function(){
@@ -193,6 +195,7 @@ describe("ActiveRecord", function(){
 		var user = User.create(records[0]);
 		user.save();
 		expect(requests.length).toBe(1);
+		expect(requests[0].method).toMatchObject('POST');
 		expect(requests[0].url).toMatchObject('/api/user/create');
 	});
 
@@ -205,20 +208,70 @@ describe("ActiveRecord", function(){
 		user.age = 99;
 		user.save();
 		expect(requests.length).toBe(1);
-		expect(requests[0].url).toMatchObject('/api/user/update/id/'+user.id);
+		expect(requests[0].method).toMatchObject('PUT');
+		expect(requests[0].url).toMatchObject('/api/user/update/'+user.id);
 	});
 
 	it("should sync with server: delete",function(){
-		console.log('*****************************');
 		xhr = sinon.useFakeXMLHttpRequest();
         requests = [];
 		xhr.onCreate = function (req) { requests.push(req); };
 
 		var user = User.add(models[0]);
-		// user.destroy();
+		user.destroy();
 		expect(requests.length).toBe(1);
-		expect(requests[0].url).toMatchObject('/api/user/delete/id/'+user.id);
+		expect(requests[0].method).toMatchObject('POST');
+		expect(requests[0].url).toMatchObject('/api/user/delete/'+user.id);
 	});
 
+	it("should sync with server data:fetch all",function(){
+		server.respondWith("GET", "/api/user/",
+                                [200, { "Content-Type": "application/json" },
+                                 '[ { "id": 12, "name": "User","lastname":"Last","age":31 },{ "id": 1, "name": "User1","lastname":"Last1","age":31 }]'
+                                ]);
+
+		User.fetch();
+		server.respond();
+		expect(User.count()).toBe(2);
+
+		var user = User.findByPk(12);
+		expect(user).toBeTruthy();
+		expect(user).toHaveProperties('age','name','lastname');
+		expect(user.get('name')).toBe('User');
+	});
+
+	it("should sync with server data: fetch by id ",function(){
+		server.respondWith("GET", "/api/user/12",
+                                [200, { "Content-Type": "application/json" },
+                                  '[ { "id": 12, "name": "User","lastname":"Last","age":31 },{ "id": 1, "name": "User1","lastname":"Last1","age":31 }]'
+                                ]);
+
+		User.fetch(12);
+		server.respond();
+		expect(User.count()).toBe(2);
+
+		console.log(User.records);
+
+		var user = User.findByPk(12);
+		expect(user).toBeTruthy();
+		expect(user).toHaveProperties('age','name','lastname');
+		expect(user.get('name')).toBe('User');
+	});
+
+	it("should sync with server data: create",function(){
+		server.respondWith("GET", "/api/user/",
+                                [200, { "Content-Type": "application/json" },
+                                 '[ { "id": 12, "name": "User","lastname":"Last","age":31 },{ "id": 1, "name": "User1","lastname":"Last1","age":31 }]'
+                                ]);
+
+		User.fetch();
+		server.respond();
+		expect(User.count()).toBe(2);
+
+		var user = User.findByPk(12);
+		expect(user).toBeTruthy();
+		expect(user).toHaveProperties('age','name','lastname');
+		expect(user.get('name')).toBe('User');
+	});
 
 });

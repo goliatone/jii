@@ -1,6 +1,10 @@
 (function(namespace, exportName){
     namespace  = namespace  || this;
     exportName = exportName || 'Model';
+
+/////////////////////////////////////////////////////////
+//// HELPER METHODS.
+/////////////////////////////////////////////////////////
     //Shim for Object.create
     var _createObject = Object.create || function(o) {
         var Func;
@@ -53,11 +57,11 @@
     };
 
     var _capitalize =function(str){
+
         return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
-    var _map = function(fun /*, thisp*/)
-    {
+    var _map = function(fun /*, thisp*/){
         var len = this.length;
         if (typeof fun != "function")
           throw new TypeError();
@@ -790,16 +794,16 @@
                 type:'POST'
             };
             actionMap['read']   = {
-                url:'/api/{model}',
+                url:'/api/{model}/',
                 type:'GET'
             };
             actionMap['update'] = {
-                url:'/api/{model}/{action}/id/{id}',
-                type:'POST'
+                url:'/api/{model}/{action}/{id}',
+                type:'PUT'
             };
             actionMap['destroy'] = {
-                url:'/api/{model}/{action}/id/{id}',
-                type:'GET'
+                url:'/api/{model}/delete/{id}',
+                type:'POST'
             };
 
 
@@ -816,6 +820,7 @@
 
                 case 'read':
                     //
+                    if(options.id) url = url + options.id;
                 break;
 
                 case 'update':
@@ -823,6 +828,7 @@
                 break;
 
                 case 'delete':
+                case 'destroy':
                     //
                 break;
 
@@ -830,13 +836,14 @@
                     return;
 
             }
-
+            console.log('url: ',url);
             $.ajax({
                 url:url,
                 type:actionMap[action].type,
                 success:options.success,
                 error:function(){console.log('error');}
             });
+            console.log('____________________________');
             
         },
         update:function(id, attributes, options){
@@ -867,7 +874,18 @@
                 // return this.publish('change', callbackOrParams);
             }
         },
-        fetch:function(options, callbackOrParams){
+        fetch:function(id, options, callbackOrParams){
+            options = options || {};
+            
+            if(id) options.id = id;
+
+            var self = this;
+            options.success = function(data){
+                console.log('on fetch success ',data);
+                self.fromJSON(data);
+
+            };
+
             this.sync('read', new this(),options);
             // if(_isFunc(callbackOrParams)){
             //     // return this.bind('fetch', callbackOrParams);
