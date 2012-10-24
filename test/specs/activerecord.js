@@ -274,4 +274,17 @@ describe("ActiveRecord", function(){
 		expect(user.get('name')).toBe('User');
 	});
 
+	it("should sync with server data: update",function(){
+		server.respondWith("GET", "/api/user/",
+                                [200, { "Content-Type": "application/json" },
+                                 '{"id": 1, "name": "User1","lastname":"Last1","age":31 }]'
+                                ]);
+		var user = User.add(models[0]);
+		user.age = 31;
+		user.save();
+		expect(requests.length).toBe(1);
+		expect(requests[0].method).toMatchObject('POST');
+		expect(requests[0].url).toMatchObject('/api/user/create');
+	});
+
 });
