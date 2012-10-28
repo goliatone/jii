@@ -784,7 +784,21 @@
             }
             return template.replace(/\{(\w+)\}/g, replaceFn);
         },
-        sync:function(action, model, options){
+        getService:function(){
+            return this._service;
+        },
+        setService:function(factory){
+            //
+            var args = Array.prototype.slice.call(arguments,1);
+            args.unshift(this);
+            this._service = factory.apply(factory, args);
+
+            return this;
+        },
+        service:function(action, model, options){
+            //
+            this._service.apply(this, arguments);
+
             options = options || {};
 
             console.log('SYNC: called with arguments: ',arguments, new Date().valueOf());
@@ -886,7 +900,7 @@
 
             };
 
-            this.sync('read', new this(),options);
+            this.service('read', new this(),options);
             // if(_isFunc(callbackOrParams)){
             //     // return this.bind('fetch', callbackOrParams);
             // } else {
@@ -996,8 +1010,8 @@
             return result;
         }
     }).include({
-        sync:function(){
-            this.ctor.sync.apply(this.ctor, arguments);
+        service:function(){
+            this.ctor.service.apply(this.ctor, arguments);
         },
         
         refresh:function(){
@@ -1013,7 +1027,7 @@
                 if(successCallback) successCallback(model, resp, options);
             };
 
-            this.sync('read',this, options);
+            this.service('read',this, options);
 
             return this;
         },
@@ -1052,7 +1066,7 @@
             clone.publish('create', options);
 
             console.log('::::::::::::::::::::::::::::::: ', arguments.callee.caller);
-            if(options.skipSync) this.sync('create', this, options);
+            if(options.skipSync) this.service('create', this, options);
 
             this.setScenario('update');
             return clone;
@@ -1073,7 +1087,7 @@
 
             var clone = record.clone();
 
-            if(options.skipSync) this.sync('update',this, options);
+            if(options.skipSync) this.service('update',this, options);
 
             this.publish('update', options);
 
@@ -1091,7 +1105,7 @@
                 if(successCallback) successCallback(model, resp, options);
             };
 
-            this.sync('destroy', this, options);
+            this.service('destroy', this, options);
 
             this.publish('destroy', options);
             this.destroyed = true;
