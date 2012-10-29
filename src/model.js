@@ -1,6 +1,6 @@
-(function(namespace, exportName){
-    namespace  = namespace  || this;
-    exportName = exportName || 'Model';
+(function(namespace, exportName, moduleName){
+
+    var Module = namespace[moduleName];
 
 /////////////////////////////////////////////////////////
 //// HELPER METHODS.
@@ -34,6 +34,14 @@
 
     };
 
+    var _hasAttributes = function(scope){
+        var attrs = Array.prototype.slice(arguments,1);
+        for(var prop in scope){
+            if(! _hasOwn(scope, prop)) return false;
+        }
+        return true;
+    };
+
     var _isFunc = function(obj){
 
         return (typeof obj === 'function');
@@ -45,7 +53,7 @@
     };
     
     var _getKeys = function(o){
-        if (o !== Object(o)) return null;
+        if (typeof o !== 'object') return null;
         var ret=[],p;
         for(p in o) if(Object.prototype.hasOwnProperty.call(o,p)) ret.push(p);
         return ret;
@@ -63,7 +71,7 @@
 
     var _map = function(fun /*, thisp*/){
         var len = this.length;
-        if (typeof fun != "function")
+        if (typeof fun !== "function")
           throw new TypeError();
 
         var res = new Array(len);
@@ -78,7 +86,10 @@
     };
 
     var _merge = function(a, b){
-        for(var p in b) a[p] = b[p];
+        for(var p in b){
+            if(b.hasOwnProperty(p))
+                a[p] = b[p];
+        }
         return a;
     };
 
@@ -94,7 +105,7 @@
 /////////////////////////////////////////////////////
 //// VALIDATOR
 /////////////////////////////////////////////////////
-    var Validator = Class('Validator').extend({
+    var Validator = Module('Validator').extend({
         createValidator:function(attributes, name, method, options){
             var ctor = this.prototype.constructor;
 
@@ -103,7 +114,7 @@
             if(!method && (_isFunc(ctor[name])) )
                 method = ctor[name];
 
-            if(method && !_isFunc(method) && _isFunc(method[nane]))
+            if(method && !_isFunc(method) && _isFunc(method[name]))
                 method = method[name];
 
             if(this.validators[name]) return this.validators[name];
@@ -116,7 +127,7 @@
             };
             attributes = makeAttributeArray(attributes);
 
-            var validator = function(){
+            var Validator = function(){
                 var self  = this;
                 self.name = name;
                 self.attributes = attributes;
@@ -124,7 +135,7 @@
                 self.skipOnError = options.skipOnError;
 
                 self.validatesAttribute = function(attr){
-                    return self.attributes.indexOf(attr) != -1;
+                    return self.attributes.indexOf(attr) !== -1;
                 };
                 self.applyTo = function(scenario){
                     return true;
@@ -139,7 +150,7 @@
                     return validates;
                 };
             };
-            this.validators[name] = new validator();
+            this.validators[name] = new Validator();
             return this.validators[name];
         },
         
@@ -149,7 +160,7 @@
         },
         getMessage:function(validator){
             //TODO: We need to replace values in msg {attribute} etc.
-            return msgs[validator] || this.defaultMessage;
+            return this.messages[validator] || this.defaultMessage;
         }
 
     });
@@ -219,13 +230,13 @@
      *
      *
      */
-    var Model = Class( exportName/*,EventDispatcher*/).extend({
+    var Model = Module( exportName/*,EventDispatcher*/).extend({
         records:{},
         grecords:{},
         attributes:[],
-        extended:function(self){
-            self.dispacher = new self();
-            self.reset();
+        extended:function(Self){
+            Self.dispacher = new Self();
+            Self.reset();
         },
         configure: function(config){
             this.attributes = config.attributes;
@@ -244,7 +255,7 @@
         },
         makeGid:function(){
             return 'xxxxxxxx-xxxx-xxxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+                var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
                 return v.toString(16);
             }).toUpperCase();
         },
@@ -280,7 +291,8 @@
                 records[i] = this._prepareModel(records[i],options);
             }
 
-            i = 0, l = records.length;
+            i = 0;
+            l = records.length;
             for(;i < l; i++){
                 record = records[i];
                 local = this.has(record) && this.get(record);
@@ -293,7 +305,8 @@
                     records.splice(i,1);
 
                     //update index, ensure we loop all!
-                    --i, --l;
+                    --i;
+                    --l;
 
                     //and move on
                     continue;
@@ -322,7 +335,7 @@
                 //if (!attrs.collection) attrs.collection = this;
                 return attrs;
             }
-            options || (options = {});
+            options = options || {};
             //options.collection = this;
             var model = new this.prototype.__class__(attrs, options);
             //if (!model._validate(model.attributes, options)) return false;
@@ -360,7 +373,10 @@
             var t = 0, p,rec;
             rec = gRecords ? this.grecords : this.records;
         
-            for(p in rec) t++;
+            for(p in rec){
+                if(rec.hasOwnProperty(p))
+                    t++;
+            }
 
             return t;
         },
@@ -404,8 +420,10 @@
             var results = [];
             var key, value;
             for(key in r){
-                value = r[key];
-                results.push(callback(value.clone()));
+                if(r.hasOwnProperty(key)){
+                    value = r[key];
+                    results.push(callback(value.clone()));
+                }
             }
             return results;
         },
@@ -446,7 +464,6 @@
                     value = objects[i];
                     result.push(new this(value));
                 }
-
                 return result;
             } else {
                 return new this(objects);
@@ -461,8 +478,10 @@
             var result = [];
             var r = this.records;
             for(key in r){
-                value = r[key];
-                result.push(value);
+                if(r.hasOwnProperty(key)){
+                    value = r[key];
+                    result.push(value);
+                }
             }
             return result;
         }
@@ -497,10 +516,12 @@
             //if(this.beforeValidate()) return false;
             
             for(prop in validators){
-                validator = validators[prop];
-                //TODO: do we want to register objects or methods?
-                //validator.call(this, attributes);
-                validator.validate(this, attributes);
+                if(validators.hasOwnProperty(prop)){
+                    validator = validators[prop];
+                    //TODO: do we want to register objects or methods?
+                    //validator.call(this, attributes);
+                    validator.validate(this, attributes);
+                }
             }
 
             //this.afterValidate();
@@ -514,10 +535,12 @@
             var validator;
             var scenario = this.getScenario();
             for(validator in validators){
-                validator = validators[validator];
-                if(validator.applyTo(scenario)){
-                    if(!attribute || validator.validatesAttribute(attribute))
-                        validators.push(validator);
+                if(validators.hasOwnProperty(validator)){
+                   validator = validators[validator];
+                    if(validator.applyTo(scenario)){
+                        if(!attribute || validator.validatesAttribute(attribute))
+                            validators.push(validator);
+                    }
                 }
             }
 
@@ -529,20 +552,16 @@
         createValidators:function(){
             var validators = {};
             for( var rule in this.rules){
-                rule = this.rules[rule];
-                if(_hasAttributes(rule, 'name', 'attribute')){
-                    //TODO:Figure out how do we store them, and how we access.
-                    validators[rule.attribute] = rule;
+                if(this.rules.hasOwnProperty(rule)){
+                    rule = this.rules[rule];
+                    if(_hasAttributes(rule, 'name', 'attribute')){
+                        //TODO:Figure out how do we store them, and how we access.
+                        validators[rule.attribute] = rule;
+                    }
                 }
             }
 
             return validators;
-        },
-        getScenario:function(){
-            return this.scenario;
-        },
-        setScenario:function(scenario){
-            this.scenario = scenario;
         },
         addError:function(attribute, error){
             var errors = this.errors[attribute] || (this.errors[attribute] = []);
@@ -551,9 +570,11 @@
         addErrors:function(errors){
             var error, attribute;
             for( attribute in errors){
-                error = errors[attribute];
-                if(_isArray(error)) this.addErrors(error);
-                else this.addError(attribute, error);
+                if(errors.hasOwnProperty(attribute)){
+                    error = errors[attribute];
+                    if(_isArray(error)) this.addErrors(error);
+                    else this.addError(attribute, error);
+                }
             }
         },
         clearErrors:function(attr){
@@ -570,7 +591,7 @@
         getErrors:function(attribute){
             var errors;
             if(attribute) errors = (this.errors[attribute] || []).concat();
-            else errors = _copy(this.errors);
+            else errors = _merge({},this.errors);
             return errors;
         },
         getError:function(attribute){
@@ -589,8 +610,11 @@
 
             //TODO: Should we validate?!
             for (key in attr){
-                value = attr[key];
-                _isFunc(this[key]) ? this[key](value) : (this[key] = value);
+                if(attr.hasOwnProperty(key)){
+                    value = attr[key];
+                    if(_isFunc(this[key])) this[key](value);
+                    else this[key] = value;
+                }
             }
             return this;
         },
@@ -620,7 +644,7 @@
             var old = this[attribute];
             this[attribute] = value;
 
-            //TODO: We should store changes and mark fields 
+            //TODO: We should store changes and mark fields
             //as dirty. (?)
 
             //TODO: We should handle validation here as well.
@@ -657,7 +681,7 @@
         },
         hasAttribute:function(attribute){
 
-            return this.getAttributeNames().indexOf(attribute) != -1;
+            return this.getAttributeNames().indexOf(attribute) !== -1;
         },
         getAttributeNames:function(){
             return this.constructor.attributes.concat();
@@ -753,20 +777,24 @@
     Model.prototype.fromForm = function(selector, keyModifier){
         var inputs = $(selector).serializeArray();
         var i = 0, l = inputs.length;
-        var name;
-        keyModifier = keyModifier || new RegExp("(^"+this.modelName+"\[)(\w+)(\]$)");
+        var name, key, result = {};
+        keyModifier = keyModifier || new RegExp("(^"+this.modelName+"\\[)(\\w+)(\\]$)");
 
         for(; i < l; i++){
             key = inputs[i];
             name = key.name.replace(keyModifier, "$2");
             result[key.name] = key.value;
         }
+
+        this.load(result);
+
+        return this;
     };
 /////////////////////////////////////////////////////
 //// ACTIVE RECORD
 //// relational: https://github.com/lyonbros/composer.js/blob/master/composer.relational.js
 /////////////////////////////////////////////////////
-    var ActiveRecord = Class('ActiveRecord',Model).extend({
+    var ActiveRecord = Module('ActiveRecord',Model).extend({
         extended:function(){
             //This works OK, it gets called just after it
             //has been extended.
@@ -941,7 +969,7 @@
 
             var records = this.fromJSON(values);
 
-            if(!isArray(records)) records = [records];
+            if(!_isArray(records)) records = [records];
 
             var record;
             var i = 0, l = records.length;
@@ -958,11 +986,14 @@
         select:function(filter){
             var result = (function(){
                 var r = this.records;
+                var record;
                 var results = [];
                 for( var id in r){
-                    record = r[id];
-                    if(filter(record))
-                        results.push(record);
+                    if(r.hasOwnProperty(id)){
+                        record = r[id];
+                        if(filter(record))
+                            results.push(record);
+                    }
                 }
                 return results;
             }).call(this);
@@ -973,10 +1004,12 @@
             var r = grecords? this.grecords : this.records;
             var record, id, rvalue;
             for( id in r){
-                record = r[id];
-                rvalue = _result(record,attr);
-                if( rvalue === value)
-                    return record.clone();
+                if(r.hasOwnProperty(id)){
+                    record = r[id];
+                    rvalue = _result(record,attr);
+                    if( rvalue === value)
+                        return record.clone();
+                }
             }
 
             return null;
@@ -992,8 +1025,10 @@
             var key, value;
             var result = [];
             for( key in r){
-                value = r[key];
-                result.push(delete this.records[key]);
+                if(r.hasOwnProperty(key)){
+                    value = r[key];
+                    result.push(delete this.records[key]);
+                }
             }
 
             return result;
@@ -1003,8 +1038,10 @@
             var key, value;
             var result = [];
             for( key in r){
-                value = r[key];
-                result.push(this.records[key].destroy());
+                if(r.hasOwnProperty(key)){
+                    value = r[key];
+                    result.push(this.records[key].destroy());
+                }
             }
 
             return result;
@@ -1118,7 +1155,7 @@
 /////////////////////////////////////////////////////
 //// SYNC LAYER
 /////////////////////////////////////////////////////
-    var LocalStore = Class('LocalStore').include({
+    var LocalStore = Module('LocalStore').include({
         id:'LocalStore',
         handleModels:function(topic, options){
             console.log('*****************************************');
@@ -1140,8 +1177,8 @@
     });
     namespace['LocalStore'] = LocalStore;
 /////////////////////////////////////////////////////
-
+    
 
     namespace['Validator'] = Validator;
     namespace[exportName]  = Model;
-}).call(this);
+})(jii, 'Model', 'Module');

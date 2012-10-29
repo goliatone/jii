@@ -1,0 +1,30 @@
+{
+  "name": "jii",
+  "title": "Jii",
+  "description": "JavaScript framework targeting easy integration with Yii.",
+  "version": "0.1.0",
+  "homepage": "http://goliatone.github.com/jii/",
+  "author": {
+    "name": "goliatone",
+    "email": "hello@goliatone.com",
+    "url": "http://goliatone.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:goliatone/jii.git"
+  },
+  "bugs": {
+    "url": "https://github.com/goliatone/jii/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://goliatone.github.com/jii//blob/master/LICENSE-MIT"
+    },
+    {
+      "type": "GPL",
+      "url": "http://goliatone.github.com/jii//blob/master/LICENSE-GPL"
+    }
+  ],
+  "keywords": []
+}

@@ -1,11 +1,12 @@
-(function(namespace,exportName){
+(function(namespace,exportName, moduleName){
+    var Module = namespace[moduleName];
 
     function _publish(list, args, options){
-        var event, a, i, l;
+        var event, i, l;
         //Invoke callbacks. We need length on each iter
         //cose it could change, unsubscribe.
         // args = _slice.call(arguments, 1);
-        var o;
+        //var o;
         for(i = 0, l = list.length; i < l; i++){
             event = list[i];
             if(!event) continue;
@@ -24,10 +25,10 @@
 
     var _slice = [].slice;
 
-    var _merge = function(a, b){
+    /*var _merge = function(a, b){
         for(var p in b){console.log(p); a[p] = b[p];}
         return a;
-    };
+    };*/
 
     /**
      * PubSub mixin.
@@ -35,7 +36,7 @@
      * TODO: Handle options! <= WE NEED TO CLONE THEM!
      *
      * Use:
-     * Class.include(PubSub);
+     * Module.include(PubSub);
      * If we need more complex stuff:
      * https://github.com/cmndo/PubSub/blob/master/pubsub.js
      * http://amplifyjs.com/api/pubsub/
@@ -47,7 +48,7 @@
         subscribe: function(topic, callback, scope, options){
             //Create _callbacks, unless we have it
             var calls = this._callbacks || (this._callbacks = {});
-            var topic = (calls[topic])  || (calls[topic] = []);
+            var topics = (calls[topic])  || (calls[topic] = []);
             //Create an array for the given topic key, unless we have it,
             //then append the callback to the array
             // topic.push(callback);
@@ -58,7 +59,7 @@
             event.target = this;
             // event.options = options || {};//_merge((options || {}),{target:this});
 
-            topic.push(event);
+            topics.push(event);
             return this;
         },
         subscribers:function(topic){
@@ -77,7 +78,7 @@
             //send it along if we just created it here.
             args.push(options);
 
-            var list, all, i, l;
+            var list, calls, all;
             //return if no callback
             if(!(calls = this._callbacks)) return this;
             //get listeners, if none and no global handlers, return.
@@ -107,11 +108,11 @@
     };
 
     var mixins = {mixins:{pubsub:mixPubSub}};
-    var PubSub = Class(exportName).include(mixPubSub).extend(mixins);
+    var PubSub = Module(exportName).include(mixPubSub).extend(mixins);
 //  ------------------------------------------------------------
-//  Make our Class available to the provided namespace.
+//  Make our Module available to the provided namespace.
     namespace  = namespace || this;
     exportName = exportName || 'PubSub';
     namespace[exportName] = PubSub;
 
-}).call(this/*,goliatone,'GClass'*/);
+})(jii,'PubSub', 'Module');

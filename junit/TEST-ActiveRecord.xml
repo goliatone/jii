@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites>
+<testsuite name="ActiveRecord" errors="0" tests="22" failures="10" time="0.042" timestamp="[object Object]">
+  <testcase classname="ActiveRecord" name="should register a set of records" time="0.009"></testcase>
+  <testcase classname="ActiveRecord" name="should register a set of models" time="0.001"></testcase>
+  <testcase classname="ActiveRecord" name="should find users by id" time="0.001"></testcase>
+  <testcase classname="ActiveRecord" name="should find users by gid" time="0.001"></testcase>
+  <testcase classname="ActiveRecord" name="should find users by attribute" time="0.001"></testcase>
+  <testcase classname="ActiveRecord" name="should find all users by attribute" time="0.001"></testcase>
+  <testcase classname="ActiveRecord" name="should delete all records" time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="Should create models from POJOs" time="0"></testcase>
+  <testcase classname="ActiveRecord" name="should select items using a filter method" time="0.001"></testcase>
+  <testcase classname="ActiveRecord" name="should create new models from POJOs" time="0.003"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="should destroy a record" time="0.002"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="beforeDestroy should allow us to abort destruction :)" time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="should check if a model exists" time="0.001"></testcase>
+  <testcase classname="ActiveRecord" name="should update new models" time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server: fetch" time="0.001"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server: create" time="0.002"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server: update" time="0.002"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server: delete" time="0.001"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server data:fetch all" time="0.001"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server data: fetch by id " time="0.001"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server data: create" time="0.002"><failure>1: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;this._service.apply&apos;) in http://127.0.0.1:8888/src/model.js (line 828)</failure></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server data: update" time="0.002"><failure>1: Expected 0 to be 1. 2: TypeError: &apos;undefined&apos; is not an object (evaluating &apos;requests[0].method&apos;) in http://127.0.0.1:8888/test/specs/activerecord-spec.js (line 286)</failure></testcase>
+</testsuite>
+</testsuites>

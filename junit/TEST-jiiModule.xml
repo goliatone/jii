@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites>
+<testsuite name="jii.Module" errors="0" tests="10" failures="0" time="0.008" timestamp="[object Object]">
+  <testcase classname="jii.Module" name="is there" time="0.002"></testcase>
+  <testcase classname="jii.Module" name="can create classes" time="0"></testcase>
+  <testcase classname="jii.Module" name="classes have a magic name propertie" time="0.001"></testcase>
+  <testcase classname="jii.Module" name="can create subclasses" time="0.001"></testcase>
+  <testcase classname="jii.Module" name="subclasses respect instanceof" time="0"></testcase>
+  <testcase classname="jii.Module" name="constructor method gets called, with parameters" time="0.001"></testcase>
+  <testcase classname="jii.Module" name="subclasses inherit instance properties" time="0.001"></testcase>
+  <testcase classname="jii.Module" name="we can call super on methods" time="0"></testcase>
+  <testcase classname="jii.Module" name="we can extend classes with static properties" time="0.001"></testcase>
+  <testcase classname="jii.Module" name="subclasses inherit static properties" time="0.001"></testcase>
+</testsuite>
+</testsuites>
