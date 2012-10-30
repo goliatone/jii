@@ -129,6 +129,7 @@
                implementation( arguments[i], this );
             }
         };
+        
         return new Decorator();
     };
 

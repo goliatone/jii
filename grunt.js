@@ -14,7 +14,14 @@ module.exports = function(grunt) {
     concat: {
       dist: {
         // src: ['<banner:meta.banner>', '<file_strip_banner:src/*.js>'],
-        src: ['src/jii.js','src/pubsub.js', 'src/module.js','src/model.js'],
+        src: ['<banner:meta.banner>',
+              'src/jii.js',
+              'src/pubsub.js',
+              'src/module.js',
+              'src/model.js',
+              'src/localstorage.js',
+              'src/!*.old.js'
+            ],
         dest: 'dist/<%= pkg.name %>.js'
       }
     },
@@ -24,21 +31,22 @@ module.exports = function(grunt) {
         dest: 'dist/<%= pkg.name %>.min.js'
       }
     },
-    qunit: {
-      files: ['test/**/*.html']
-    },
+    /*qunit: {
+      files: ['test/** /*.html']
+    },*/
     lint: {
       files: ['grunt.js', 'src/**/*.js']
     },
     watch: {
       files: '<config:lint.files>',
-      tasks: 'lint qunit'
+      tasks: 'lint jasmine'
     },
     jasmine : {
       src : ['libs/jquery/jquery.js',
               'src/jii.js',
               'src/module.js',
-              'src/**/*.js'
+              'src/**/*.js',
+              'src/!(*.old.js)'
       ],
       specs : 'test/specs/**/*-spec.js',
       helpers : 'test/specs/helpers/*.js',

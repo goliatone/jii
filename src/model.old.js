@@ -99,9 +99,127 @@
     };
 
     var _firstToLowerCase = function(str){
-
         return str.charAt(0).toLowerCase() + str.slice(1);
     };
+
+/////////////////////////////////////////////////////
+//// VALIDATOR
+/////////////////////////////////////////////////////
+    var Validator = Module('Validator').extend({
+        createValidator:function(attributes, name, method, options){
+            var ctor = this.prototype.constructor;
+
+            options = _merge(ctor.defaultOptions, (options || {}));
+
+            if(!method && (_isFunc(ctor[name])) )
+                method = ctor[name];
+
+            if(method && !_isFunc(method) && _isFunc(method[name]))
+                method = method[name];
+
+            if(this.validators[name]) return this.validators[name];
+            
+            var makeAttributeArray = function(attributes){
+                if(typeof attributes === 'string'){
+                    attributes = attributes.split(',').map(String.trim);
+                }
+                return attributes;
+            };
+            attributes = makeAttributeArray(attributes);
+
+            var Validator = function(){
+                var self  = this;
+                self.name = name;
+                self.attributes = attributes;
+                self.message = options.message;
+                self.skipOnError = options.skipOnError;
+
+                self.validatesAttribute = function(attr){
+                    return self.attributes.indexOf(attr) !== -1;
+                };
+                self.applyTo = function(scenario){
+                    return true;
+                };
+                self.validate = function(scope){
+                    var args = Array.prototype.slice.call(arguments,1);
+                    //self.ensureArguments(method, args );
+                    var validates = method.apply(scope, args);
+                    console.log(this);
+                    //we need to add the error:
+                    //if(!validates) this.errors = 23;
+                    return validates;
+                };
+            };
+            this.validators[name] = new Validator();
+            return this.validators[name];
+        },
+        
+        setMessage:function(validator, message){
+            var msgs = (this.messages || (this.messages = {}));
+            msgs[validator] = message;
+        },
+        getMessage:function(validator){
+            //TODO: We need to replace values in msg {attribute} etc.
+            return this.messages[validator] || this.defaultMessage;
+        }
+
+    });
+    
+    Validator.defaultMessage = "Error.";
+    Validator.defaultOptions = {
+            message:Validator.defaultMessage,
+            skipOnError:false,
+            on:[]
+        };
+    Validator.length = function(attribute, value){
+        //
+        return this[attribute].length === value;
+    };
+    Validator.range = function(attribute, min, max){
+        //
+    };
+    Validator.numerical = function(attribute){
+        //
+        return ! isNaN(this[attribute]);
+    };
+
+    Validator.type = function(attribute, value){
+        //
+    };
+
+    Validator.required = function(attribute){
+        //
+        return !_isEmpty(this[attribute]);
+    };
+
+    Validator.match = function(attribute, match){
+        //
+    };
+
+    Validator.email = function(attribute){
+        //
+    };
+
+    Validator.url = function(attribute){
+        //
+    };
+
+    Validator.compare = function(attribute, value){
+        //
+    };
+
+    Validator.$in = function(attribute,match){
+        //
+    };
+
+    Validator.$default = function(attribute,value){
+        //
+    };
+
+    Validator.exists = function(attribute){
+        //
+    };
+/////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////
 //// MODEL
@@ -297,15 +415,14 @@
     ////////////////////////////////////////////////////////////
     //// ArrayCollection Stuff.
     ////////////////////////////////////////////////////////////
-        each:function(callback, context){
-            var r = this.all();
+        each:function(callback){
+            var r = this.records;
             var results = [];
-            var key, value, i = 0;
+            var key, value;
             for(key in r){
                 if(r.hasOwnProperty(key)){
                     value = r[key];
-                    context = context || value;
-                    results.push(callback.call(context, value, i++, r));
+                    results.push(callback(value.clone()));
                 }
             }
             return results;
@@ -386,10 +503,6 @@
             //We save a copy in static model.
             this.ctor.add(this);
 
-        },
-        log:function(){
-            if(this.debug === false || !window.console) return;
-            window.console.log.apply(window.console, arguments);
         },
     ////////////////////////////////////////////////////////
     //// VALIDATION: Todo, move to it's own module.
@@ -1042,7 +1155,7 @@
 /////////////////////////////////////////////////////
 //// SYNC LAYER
 /////////////////////////////////////////////////////
-    /*var LocalStore = Module('LocalStore').include({
+    var LocalStore = Module('LocalStore').include({
         id:'LocalStore',
         handleModels:function(topic, options){
             console.log('*****************************************');
@@ -1062,7 +1175,7 @@
             console.log('*****************************************');
         }
     });
-    namespace['LocalStore'] = LocalStore;*/
+    namespace['LocalStore'] = LocalStore;
 /////////////////////////////////////////////////////
     
 
