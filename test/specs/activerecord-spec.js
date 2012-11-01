@@ -194,9 +194,10 @@ describe("ActiveRecord", function(){
 
 		var user = User.create(records[0]);
 		user.save();
+		console.log('requests ', requests);
 		expect(requests.length).toBe(1);
 		expect(requests[0].method).toMatchObject('POST');
-		expect(requests[0].url).toMatchObject('/api/user/create');
+		expect(requests[0].url).toMatchObject('/api/user/');
 	});
 
 	it("should sync with server: update",function(){
@@ -209,7 +210,7 @@ describe("ActiveRecord", function(){
 		user.save();
 		expect(requests.length).toBe(1);
 		expect(requests[0].method).toMatchObject('PUT');
-		expect(requests[0].url).toMatchObject('/api/user/update/'+user.id);
+		expect(requests[0].url).toMatchObject('/api/user/'+user.id);
 	});
 
 	it("should sync with server: delete",function(){
@@ -221,7 +222,7 @@ describe("ActiveRecord", function(){
 		user.destroy();
 		expect(requests.length).toBe(1);
 		expect(requests[0].method).toMatchObject('POST');
-		expect(requests[0].url).toMatchObject('/api/user/delete/'+user.id);
+		expect(requests[0].url).toMatchObject('/api/user/'+user.id);
 	});
 
 	it("should sync with server data:fetch all",function(){
@@ -279,18 +280,20 @@ describe("ActiveRecord", function(){
                                 [200, { "Content-Type": "application/json" },
                                  '{"id": 1, "name": "User1","lastname":"Last1","age":31 }]'
                                 ]);
-		xhr = sinon.useFakeXMLHttpRequest();
-        requests = [];
-		xhr.onCreate = function (req) { requests.push(req); };
 
 
-		console.log('hola');
+		
 		var user = User.add(models[0]);
-		user.age = 31;
+		user.age = 81;
+		user.name = 'Newname';
+		// user.id = null;
+
 		user.save();
-		expect(requests.length).toBe(1);
-		expect(requests[0].method).toMatchObject('PUT');
-		expect(requests[0].url).toMatchObject('/api/user/'+user.id);
+		server.respond();
+
+		expect(server.requests.length).toBe(1);
+		expect(server.requests[0].method).toMatchObject('PUT');
+		expect(server.requests[0].url).toMatchObject('/api/user/'+user.id);
 	});
 
 });

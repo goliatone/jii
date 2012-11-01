@@ -64,7 +64,7 @@
             var attributes = model.toJSON();
             //attributes.gid = model.gid;
             localStorage.setItem(model.gid, JSON.stringify(attributes));
-            model.log('store into freezer: ', model.gid);
+            // model.log('store into freezer: ', model.gid);
             _addToIndex(model.gid);
         };
 
@@ -80,7 +80,7 @@
             create: function(model, callback) {
                 if(_isArray(model)){
                     for(var i = 0, t = model.length;i<t;++i){
-                        console.log('add model: ', i,' : ', model[i].gid);
+                        // console.log('add model: ', i,' : ', model[i].gid);
                         _store(model[i]);
                     }
                 }
@@ -108,8 +108,8 @@
                 var gids = _readIndex();
                 var models = [];
                 var attributes, model, gid;
-                console.log('ids:  ', existingIds);
-                console.log('gids: ', gids);
+                // console.log('ids:  ', existingIds);
+                // console.log('gids: ', gids);
                 for (var i = 0, length = gids.length; i < length; i++) {
                     gid = gids[i];
 

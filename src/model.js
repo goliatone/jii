@@ -728,12 +728,12 @@
                 type:'GET'
             };
             actionMap['update'] = {
-                url:'/api/{model}/{action}/{id}',
+                url:'/api/{model}/{id}',
                 type:'PUT'
             };
             actionMap['destroy'] = {
-                url:'/api/{model}/delete/{id}',
-                type:'POST'
+                url:'/api/{model}/{id}',
+                type:'DELETE'
             };
 
 
@@ -968,6 +968,10 @@
             this.publish('beforeSave');
 
             var action = this.isNewRecord() ? 'create' : 'update';
+            
+            //TODO: Refactor this!!!!
+            if(action === 'update' ) options.skipSync = true;
+
             var record = this[action](options);
 
             this.publish('save', options);
@@ -977,7 +981,6 @@
         create:function(options){
             options = options || {};
             this.publish('beforeCreate',options);
-
             // if(!this.id) this.id = this.gid;
 
             var record = this.duplicate(false);
