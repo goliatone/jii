@@ -62,45 +62,77 @@
 
         var _store = function(model) {
             var attributes = model.toJSON();
+            //attributes.gid = model.gid;
             localStorage.setItem(model.gid, JSON.stringify(attributes));
+            model.log('store into freezer: ', model.gid);
             _addToIndex(model.gid);
         };
 
+        var _isArray=function(value) {
+
+            return Object.prototype.toString.call(value) === '[object Array]';
+        };
 
         var LocalStorage = {
+            makeStoreId:function(ModelModule){
+                return ModelModule.__name__+"-collection";
+            },
             create: function(model, callback) {
-                _store(model);
-                callback(true);
+                if(_isArray(model)){
+                    for(var i = 0, t = model.length;i<t;++i){
+                        console.log('add model: ', i,' : ', model[i].gid);
+                        _store(model[i]);
+                    }
+                }
+                else _store(model);
+                
+                if(callback) callback(true);
             },
-            destroy: function(model, callback) {
-                localStorage.removeItem(model.gid);
-                _removeFromIndex(model.gid);
-                callback(true);
-            },
-            read: function(callback) {
-                if (!callback) return false;
+            destroy:function(model, callback) {
+                if(model){
+                    localStorage.removeItem(model.gid);
+                    _removeFromIndex(model.gid);
+                } else {
+                    var ids = _readIndex();
+                    for(var i=0, t = ids.length; i<t; i++){
+                        _removeFromIndex(ids[i]);
+                    }
+                }
 
-                var existingIds = ModelModule.each(function() { return this.gid; });
+                if(callback) callback(true);
+            },
+            read:function(callback) {
+                //if (!callback) return false;
+
+                var existingIds = ModelModule.each(function(item) { return item.gid; });
                 var gids = _readIndex();
                 var models = [];
                 var attributes, model, gid;
-
+                console.log('ids:  ', existingIds);
+                console.log('gids: ', gids);
                 for (var i = 0, length = gids.length; i < length; i++) {
                     gid = gids[i];
 
+                    //TODO: review else,
+                    // just pull from ModelModule.get(gid)
                     if (_inArray(existingIds, gid) === -1) {
                         attributes = JSON.parse(localStorage[gid]);
                         model = new ModelModule(attributes);
                         model.gid = gid;
-                        models.push(model);
+                    } else {
+                        model = ModelModule.findByGid(gid);
                     }
+
+                    models.push(model);
                 }
 
-               callback(models);
+                if(callback) callback(models);
+
+                return models;
             },
             update: function(model, callback) {
                 _store(model);
-                callback(true);
+                if(callback) callback(true);
             }
         };
 

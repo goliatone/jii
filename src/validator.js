@@ -336,4 +336,4 @@
 
     namespace[exportName] = Validator;
 
-})(jii, 'exportName', 'Module');
+})(jii, 'Validator', 'Module');

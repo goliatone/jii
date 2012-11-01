@@ -144,7 +144,6 @@
         isGid:function(gid){
             if(_isEmpty(gid)) return false;
             // if(typeof gid === obj)
-            console.log("isGid ",gid);
 
             gid = gid.replace(/[A-Z\d]/g,function(){return 0;});
             return (gid === '00000000-0000-0000-0000-000000000000');
@@ -380,8 +379,9 @@
 
             if(attrs) this.load(attrs,options);
             
-
             this.gid = this.ctor.makeGid();
+            // if(attrs && attrs.hasOwnProperty('gid'))
+            //     this.gid = attrs.gid;
 
             //We save a copy in static model.
             this.ctor.add(this);
@@ -716,6 +716,7 @@
 
             options = options || {};
 
+            console.log('____________________________');
             console.log('SYNC: called with arguments: ',arguments, new Date().valueOf());
             var actionMap = {};
             actionMap['create'] = {
@@ -1064,8 +1065,6 @@
     });
     namespace['LocalStore'] = LocalStore;*/
 /////////////////////////////////////////////////////
-    
 
-    namespace['Validator'] = Validator;
     namespace[exportName]  = Model;
 })(jii, 'Model', 'Module');

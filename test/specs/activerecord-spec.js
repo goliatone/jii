@@ -70,7 +70,7 @@ describe("ActiveRecord", function(){
 		expect(users).toHaveLength(2);
 		users.every(function(user){
 			expect(user.age).toBe(31);
-		});		
+		});
 	});
 
 	it("should delete all records",function(){
@@ -85,7 +85,7 @@ describe("ActiveRecord", function(){
 		expect(User.count(true)).toBe(records.length);
 		var user = User.findByAttribute('name','Pepe', true);
 		expect(user).toBeTruthy();
-		expect(user.name).toBe('Pepe');	
+		expect(user.name).toBe('Pepe');
 	});
 
 	it("should select items using a filter method", function(){
@@ -279,12 +279,18 @@ describe("ActiveRecord", function(){
                                 [200, { "Content-Type": "application/json" },
                                  '{"id": 1, "name": "User1","lastname":"Last1","age":31 }]'
                                 ]);
+		xhr = sinon.useFakeXMLHttpRequest();
+        requests = [];
+		xhr.onCreate = function (req) { requests.push(req); };
+
+
+		console.log('hola');
 		var user = User.add(models[0]);
 		user.age = 31;
 		user.save();
 		expect(requests.length).toBe(1);
-		expect(requests[0].method).toMatchObject('POST');
-		expect(requests[0].url).toMatchObject('/api/user/create');
+		expect(requests[0].method).toMatchObject('PUT');
+		expect(requests[0].url).toMatchObject('/api/user/'+user.id);
 	});
 
 });
