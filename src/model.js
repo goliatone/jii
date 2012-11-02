@@ -652,6 +652,8 @@
         }
     });
 
+    //TODO: Parse attributes, we want to have stuff
+    //like attribute type, and validation info.
     Model.prototype.metadata = function(meta){
 
     };
@@ -677,6 +679,8 @@
 
         return this;
     };
+
+
 /////////////////////////////////////////////////////
 //// ACTIVE RECORD
 //// relational: https://github.com/lyonbros/composer.js/blob/master/composer.relational.js
@@ -720,7 +724,7 @@
             console.log('SYNC: called with arguments: ',arguments, new Date().valueOf());
             var actionMap = {};
             actionMap['create'] = {
-                url:'/api/{model}/{action}',
+                url:'/api/{model}/',
                 type:'POST'
             };
             actionMap['read']   = {

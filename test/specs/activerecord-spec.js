@@ -221,7 +221,7 @@ describe("ActiveRecord", function(){
 		var user = User.add(models[0]);
 		user.destroy();
 		expect(requests.length).toBe(1);
-		expect(requests[0].method).toMatchObject('POST');
+		expect(requests[0].method).toMatchObject('DELETE');
 		expect(requests[0].url).toMatchObject('/api/user/'+user.id);
 	});
 
