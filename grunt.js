@@ -20,6 +20,7 @@ module.exports = function(grunt) {
               'src/module.js',
               'src/model.js',
               'src/localstorage.js',
+              'src/rest.js',
               'src/!*.old.js'
             ],
         dest: 'dist/<%= pkg.name %>.js'

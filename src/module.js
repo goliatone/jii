@@ -50,8 +50,7 @@
             self.prototype._super = parent.prototype;
         }
         
-        //define default constructor. TODO:we could rename it.
-        //self.prototype.init = function(){};
+        
     //------------------------------
     // Adding class/static properties: i.e: User.findByPk().
         self.extend = function(obj, target){
@@ -90,16 +89,23 @@
         /**
          * Utility mehtod to proxy function calls
          * with the proper scope.
+         * Any extra parameters passed to it, will be
+         * concatenated into the final call.
+         *
          * @access public
          * @param   Function    Function to be proxied.
          * @return  Function    Wrapped function with scope set to self.
          */
+        var _splice = Array.prototype.splice;
         self.proxy = function(func){
+            var a = _splice.call(arguments,1);
             var self = this;
             return function(){
-                return func.apply(self, arguments);
+                var a2 = _splice.call(arguments,0);
+                return func.apply(self, a.concat(a2));
             };
         };
+
         
         //shortcuts.
         self.fn = self.prototype;
@@ -151,6 +157,11 @@
         if (typeof obj !== "object") return obj;
         if (jQuery.isArray(obj)) return jQuery.extend([], obj);
         return jQuery.extend({}, obj);
+    };
+
+    
+    Module.extend = function(){
+        return jQuery.extend.call(jQuery, arguments);
     };
 
     /**

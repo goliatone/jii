@@ -121,8 +121,17 @@
             Self.reset();
         },
         configure: function(config){
-            this.attributes = config.attributes;
+
+            //here, we should parse config to get
+            //meta, and THEN, do a merge
+            if(_hasOwn(config, 'attributes'))
+                _merge(this.attributes, config.attributes);
+            // this.attributes = config.attributes;
             // this.unbind();
+            //TODO: list configurable props and merge
+            //only those from config.(?)
+            this.fk = 'id';
+
         },
         clonesArray:function(array){
             var value;
@@ -203,7 +212,10 @@
                 this.grecords[record.gid] = record;
 
                 //save a ref to the record. TODO:Should we clone!?
+                //TODO: use this.fk
                 if(record.has('id')) this.records[record.id] = record;//.clone();
+
+                //TODO: make id a method id() => return this[this.fk];
             }
 
             //should we register for all updates on model?!
@@ -217,6 +229,7 @@
                 return attrs;
             }
             options = options || {};
+            //options.fk = this.fk;
             //options.collection = this;
             var model = new this.prototype.__class__(attrs, options);
             //if (!model._validate(model.attributes, options)) return false;
@@ -262,6 +275,7 @@
             return t;
         },
         remove:function(id){
+            //TODO: Do we want to remove by gid?! most likely
             if(!this.has(id)) return null;
 
             var r = this.get(id);
@@ -373,8 +387,10 @@
         validators:{},
         scenario:null,
         init:function(attrs, options){
-            this.modelName = _capitalize(this.__name__);
             
+            this.modelName = _capitalize(this.__name__);
+            this.modelId = _firstToLowerCase(this.__name__);
+
             this.clearErrors();
 
             if(attrs) this.load(attrs,options);
@@ -1050,27 +1066,8 @@
 /////////////////////////////////////////////////////
 //// SYNC LAYER
 /////////////////////////////////////////////////////
-    /*var LocalStore = Module('LocalStore').include({
-        id:'LocalStore',
-        handleModels:function(topic, options){
-            console.log('*****************************************');
-            switch(topic){
-                case 'update':
-                    console.log('We have update: id ',options.target.id);
-                break;
-                case 'create':
-                    console.log('We have create: gid ',options.target.gid);
-                break;
-                case 'delete':
-                    console.log('We have delete: ', options.target.id);
-                break;
-                case 'find':
-                break;
-            }
-            console.log('*****************************************');
-        }
-    });
-    namespace['LocalStore'] = LocalStore;*/
+    
+    
 /////////////////////////////////////////////////////
 
     namespace[exportName]  = Model;
