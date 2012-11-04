@@ -1,19 +1,9 @@
-//TODO: Unify interface with localstorage.
+//TODO: Unify interface with localstorage
 (function(namespace, exportName, moduleName){
+    
     var Module = namespace[moduleName];
 
     var REST = Module(exportName);
-
-    var NAME_MATCHER = /:([\w\d]+)/g;
-    var _getResourceParams = function(resource){
-        var resourceParamNames = [];
-        var param;
-        while((param = NAME_MATCHER.exec(resource)) !== null){
-            resourceParamNames.push(param[1]);
-        }
-
-        return resourceParamNames;
-    };
 
     /**
      * Create action map object.
@@ -23,33 +13,45 @@
      */
     var _initializeActionMap = function(service){
         
+        //TODO: Use attributes and dirty elements from
+        //model, so that we don't send everything back
+        //to the server.
+        //TODO: Are we covering relationships?
         var actionMap = {};
 
         actionMap['create'] = {
             url:'/api/{modelId}/',
-            type:'POST'
+            type:'POST',
+            data:'toJSON'
         };
 
         actionMap['read']   = {
             url:'/api/{modelId}/',
-            type:'GET'
+            type:'GET',
+            data:null
         };
 
         actionMap['update'] = {
             url:'/api/{modelId}/{id}',
-            type:'PUT'
+            type:'PUT',
+            data:'toJSON'
         };
 
         actionMap['destroy'] = {
             url:'/api/{modelId}/{id}',
-            type:'DELETE'
+            type:'DELETE',
+            data:null
         };
 
         actionMap.compile = function(action, model){
-            var data     = $.ajaxSettings.data;
+            
             var settings = actionMap[action];
             var options  = $.extend({}, settings);
-            options.data = $.extend(options.data, data);
+
+
+            //Build data payload.
+            if(options.data) options.data = service.buildPayload(options.data,model);
+            
             options.url  = service.buildUrl(options.url, model, service);
             return options;
         };
@@ -86,17 +88,15 @@
      */
     REST.prototype.actionMap = {};
 
-    /**
-     * Array that contains the
-     * @type {Array}
-     */
-    REST.prototype.resourceParamNames = [];
-
     REST.prototype.init = function(ModelModule, resource, methods){
-        this.resource = resource;
+        this.resource    = resource;
         this.modelModule = ModelModule;
-        this.resourceParamNames = _getResourceParams(resource);
         _initializeActionMap(this);
+    };
+
+
+    REST.prototype.buildPayload = function(method, model){
+        return JSON.stringify(model[method]());
     };
 
 
@@ -117,37 +117,29 @@
         return template.replace(/\{(\w+)\}(\.(\w+))?/g, replaceFn);
     };
     
-    REST.prototype.path = function(model){
-        var path = this.resource;
-        var param, i = 0, t = this.resourceParamNames.length;
-        for(; i < t; i++){
-            param = this.resourceParamNames[i];
-            path = path.replace(":"+param, model.get(param));
-        }
-
-        return path;
-    };
-
+   
     
-
-    REST.prototype.service = function(options, action, model, callback){
+    REST.prototype.service = function(action, model, options, callback){
+        
+        //TODO: How do we merge options.data and compiled data?
         //TODO: Add support for search. How do we serialize params?!
         //TODO: We should get data, then merge from options, and
         //delete options.data, so that we dont override this on final
         //merge.
-        var data = {};
-        if(options && options.data){
-            data = $.merge(data, options.data);
-        }
-        data = options.data;
+        // var data = {};
+        // if(options && options.data){
+        //     data = $.merge(data, options.data);
+        // }
+        // data = options.data;
 
         var settings = _initializeActionSettings(this, action, model, callback);
         console.log(settings);
 
-        //TODO: Merge options & settigns.
         settings = $.merge(settings, options);
+
+        var data = options.data || null;
+
         console.log(settings);
-        console.log(settings.url+'?' + $.param(data));
         
         //TODO: Make this.transport(settings) => REST.proto.transport = $.ajax;?
         $.ajax(settings);
@@ -166,19 +158,19 @@
     };
 
     REST.prototype.create = function(model, options, callback){
-        return this.service(options, 'create', model, callback);
+        return this.service('create', model, options, callback);
     };
 
     REST.prototype.read = function(model, options, callback){
-        return this.service(options, 'read', model, callback);
+        return this.service('read', model, options, callback);
     };
 
     REST.prototype.update = function(model, options, callback){
-        return this.service(options, 'update', model, callback);
+        return this.service('update', model, options, callback);
     };
 
     REST.prototype.destroy = function(model, options, callback){
-        return this.service(options, 'destroy', model, callback);
+        return this.service('destroy', model, options, callback);
     };
 
     REST.prototype.handle302 = function(){

@@ -103,6 +103,7 @@
         return str.charAt(0).toLowerCase() + str.slice(1);
     };
 
+
 /////////////////////////////////////////////////////
 //// MODEL
 /////////////////////////////////////////////////////
@@ -110,7 +111,8 @@
      * Model is a glorified Object with pubsub and an interface
      * to deal with attributes, validation
      *
-     *
+     * TODO: Deal with attributes and relations. What if an
+     *       attribute is an objecty? right now, we loose it.
      */
     var Model = Module( exportName/*,EventDispatcher*/).extend({
         records:{},
@@ -125,7 +127,10 @@
             //here, we should parse config to get
             //meta, and THEN, do a merge
             if(_hasOwn(config, 'attributes'))
-                _merge(this.attributes, config.attributes);
+                this.extend(config.attributes, this.attributes);
+                //$.extend(true,this.attributes,config.attributes);
+            
+
             // this.attributes = config.attributes;
             // this.unbind();
             //TODO: list configurable props and merge
@@ -389,7 +394,7 @@
         init:function(attrs, options){
             
             this.modelName = _capitalize(this.__name__);
-            this.modelId = _firstToLowerCase(this.__name__);
+            this.modelId   = _firstToLowerCase(this.__name__);
 
             this.clearErrors();
 
@@ -512,10 +517,12 @@
             //we need to filter the stuff we load (?)
 
             //TODO: Should we validate?!
-            for (key in attr){
+            for(key in attr){
                 if(attr.hasOwnProperty(key)){
+                    console.log('We go for key: ', key);
                     value = attr[key];
-                    if(_isFunc(this[key])) this[key](value);
+                    if(typeof value === 'object') this.load(value);
+                    else if(_isFunc(this[key])) this[key](value);
                     else this[key] = value;
                 }
             }

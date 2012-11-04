@@ -1,5 +1,7 @@
 (function(jQuery, namespace, exportName){
 
+    var _splice = Array.prototype.splice;
+
     var Module = function(name, parent){
         
         // if(namespace[name])
@@ -96,7 +98,6 @@
          * @param   Function    Function to be proxied.
          * @return  Function    Wrapped function with scope set to self.
          */
-        var _splice = Array.prototype.splice;
         self.proxy = function(func){
             var a = _splice.call(arguments,1);
             var self = this;
@@ -160,9 +161,10 @@
     };
 
     
-    Module.extend = function(){
-        return jQuery.extend.call(jQuery, arguments);
-    };
+    /*Module.merge = function(){
+        console.log(_splice.call(arguments,0))
+        return jQuery.extend.apply(jQuery, _splice.call(arguments,0));
+    };*/
 
     /**
      * Scope in which the module will store all clases,
