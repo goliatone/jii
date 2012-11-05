@@ -1,4 +1,4 @@
-(function(namespace, exportName, moduleName){
+(function(namespace, exportName, moduleName, extendsModule){
 
     var Module = namespace[moduleName];
 
@@ -114,7 +114,7 @@
      * TODO: Deal with attributes and relations. What if an
      *       attribute is an objecty? right now, we loose it.
      */
-    var Model = Module( exportName/*,EventDispatcher*/).extend({
+    var Model = Module( exportName ).extend({
         records:{},
         grecords:{},
         attributes:[],
@@ -674,7 +674,9 @@
             return this.load(records);
         }
     });
-
+    
+    Model.include(namespace.PubSub.mixins['pubsub']);
+    
     //TODO: Parse attributes, we want to have stuff
     //like attribute type, and validation info.
     Model.prototype.metadata = function(meta){
@@ -708,7 +710,7 @@
 //// ACTIVE RECORD
 //// relational: https://github.com/lyonbros/composer.js/blob/master/composer.relational.js
 /////////////////////////////////////////////////////
-    var ActiveRecord = Module('ActiveRecord',Model).extend({
+    var ActiveRecord = Module('ActiveRecord', Model).extend({
         extended:function(){
             //This works OK, it gets called just after it
             //has been extended.
@@ -1078,4 +1080,4 @@
 /////////////////////////////////////////////////////
 
     namespace[exportName]  = Model;
-})(jii, 'Model', 'Module');
+})(jii, 'Model', 'Module', 'PubSub');

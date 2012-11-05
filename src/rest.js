@@ -89,13 +89,14 @@
     REST.prototype.actionMap = {};
 
     REST.prototype.init = function(ModelModule, resource, methods){
-        this.resource    = resource;
+        // this.resource    = resource;
         this.modelModule = ModelModule;
         _initializeActionMap(this);
     };
 
 
     REST.prototype.buildPayload = function(method, model){
+        //TODO: Check if model has method! Throw Error!
         return JSON.stringify(model[method]());
     };
 
@@ -135,9 +136,8 @@
         var settings = _initializeActionSettings(this, action, model, callback);
         console.log(settings);
 
-        settings = $.merge(settings, options);
-
-        var data = options.data || null;
+        if(options)
+            settings = $.merge(settings, options);
 
         console.log(settings);
         
@@ -147,14 +147,17 @@
     
     
     REST.prototype.onSuccess = function(model, callback, data, textStatus, jqXHR){
+        console.clear();
         console.log('on success');
+        console.log(arguments);
     };
 
     
     REST.prototype.onError = function(model, callback, jqXHR, textStatus, errorThrown){
-        console.log('on error for model ', model.id);
-        console.log(arguments);
-        if(callback) callback.call(this, arguments);
+        if(callback){
+            callback.apply(this, model, jqXHR, textStatus, errorThrown);
+        }
+            
     };
 
     REST.prototype.create = function(model, options, callback){
