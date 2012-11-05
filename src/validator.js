@@ -72,7 +72,7 @@
     var _map = function(fun /*, thisp*/){
         var len = this.length;
         if (typeof fun !== "function")
-          throw new TypeError();
+            throw new TypeError();
 
         var res = new Array(len);
         var thisp = arguments[1];

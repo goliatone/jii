@@ -2,9 +2,9 @@ describe("ActiveRecord", function(){
 	var User, records, models, xhr, server;
 
 	beforeEach(function(){
-		//User = jii.Module('User','Model').include(PubSub.mixins['pubsub']);
-		var pubsub = jii.PubSub.mixins['pubsub'];
-		User = jii.Module('User','ActiveRecord').include(pubsub);
+		//We are now inheriting from PubSub.
+		// var pubsub = jii.PubSub.mixins['pubsub'];
+		User = jii.Module('User','ActiveRecord');//.include(pubsub);
 		User.configure({attributes:['id','age','name','lastname']});
 		models = [
 			{id:1,name:'Pepe',lastname:'Rone',age:31},
