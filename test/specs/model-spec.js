@@ -4,8 +4,8 @@ describe("Model", function(){
 
 	beforeEach(function(){
 		//TODO: WE SHOULD REALLY BE TESTING MODEL, NOT AR!!!
-		var pubsub = jii.PubSub.mixins['pubsub'];
-		User = jii.Module('User','ActiveRecord').include(pubsub);
+		//var pubsub = jii.PubSub.mixins['pubsub'];
+		User = jii.Module('User','ActiveRecord');//.include(pubsub);
 		
 
 		User.configure({attributes:['id','age','name','lastname']});

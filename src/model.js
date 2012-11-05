@@ -1,4 +1,4 @@
-(function(namespace, exportName, moduleName){
+(function(namespace, exportName, moduleName, extendsModule){
 
     var Module = namespace[moduleName];
 
@@ -103,6 +103,7 @@
         return str.charAt(0).toLowerCase() + str.slice(1);
     };
 
+
 /////////////////////////////////////////////////////
 //// MODEL
 /////////////////////////////////////////////////////
@@ -110,9 +111,10 @@
      * Model is a glorified Object with pubsub and an interface
      * to deal with attributes, validation
      *
-     *
+     * TODO: Deal with attributes and relations. What if an
+     *       attribute is an objecty? right now, we loose it.
      */
-    var Model = Module( exportName/*,EventDispatcher*/).extend({
+    var Model = Module( exportName ).extend({
         records:{},
         grecords:{},
         attributes:[],
@@ -121,8 +123,20 @@
             Self.reset();
         },
         configure: function(config){
-            this.attributes = config.attributes;
+
+            //here, we should parse config to get
+            //meta, and THEN, do a merge
+            if(_hasOwn(config, 'attributes'))
+                this.extend(config.attributes, this.attributes);
+                //$.extend(true,this.attributes,config.attributes);
+            
+
+            // this.attributes = config.attributes;
             // this.unbind();
+            //TODO: list configurable props and merge
+            //only those from config.(?)
+            this.fk = 'id';
+
         },
         clonesArray:function(array){
             var value;
@@ -203,7 +217,10 @@
                 this.grecords[record.gid] = record;
 
                 //save a ref to the record. TODO:Should we clone!?
+                //TODO: use this.fk
                 if(record.has('id')) this.records[record.id] = record;//.clone();
+
+                //TODO: make id a method id() => return this[this.fk];
             }
 
             //should we register for all updates on model?!
@@ -217,6 +234,7 @@
                 return attrs;
             }
             options = options || {};
+            //options.fk = this.fk;
             //options.collection = this;
             var model = new this.prototype.__class__(attrs, options);
             //if (!model._validate(model.attributes, options)) return false;
@@ -262,6 +280,7 @@
             return t;
         },
         remove:function(id){
+            //TODO: Do we want to remove by gid?! most likely
             if(!this.has(id)) return null;
 
             var r = this.get(id);
@@ -373,8 +392,10 @@
         validators:{},
         scenario:null,
         init:function(attrs, options){
-            this.modelName = _capitalize(this.__name__);
             
+            this.modelName = _capitalize(this.__name__);
+            this.modelId   = _firstToLowerCase(this.__name__);
+
             this.clearErrors();
 
             if(attrs) this.load(attrs,options);
@@ -496,10 +517,12 @@
             //we need to filter the stuff we load (?)
 
             //TODO: Should we validate?!
-            for (key in attr){
+            for(key in attr){
                 if(attr.hasOwnProperty(key)){
+                    console.log('We go for key: ', key);
                     value = attr[key];
-                    if(_isFunc(this[key])) this[key](value);
+                    if(typeof value === 'object') this.load(value);
+                    else if(_isFunc(this[key])) this[key](value);
                     else this[key] = value;
                 }
             }
@@ -651,7 +674,9 @@
             return this.load(records);
         }
     });
-
+    
+    Model.include(namespace.PubSub.mixins['pubsub']);
+    
     //TODO: Parse attributes, we want to have stuff
     //like attribute type, and validation info.
     Model.prototype.metadata = function(meta){
@@ -685,7 +710,7 @@
 //// ACTIVE RECORD
 //// relational: https://github.com/lyonbros/composer.js/blob/master/composer.relational.js
 /////////////////////////////////////////////////////
-    var ActiveRecord = Module('ActiveRecord',Model).extend({
+    var ActiveRecord = Module('ActiveRecord', Model).extend({
         extended:function(){
             //This works OK, it gets called just after it
             //has been extended.
@@ -1050,28 +1075,9 @@
 /////////////////////////////////////////////////////
 //// SYNC LAYER
 /////////////////////////////////////////////////////
-    /*var LocalStore = Module('LocalStore').include({
-        id:'LocalStore',
-        handleModels:function(topic, options){
-            console.log('*****************************************');
-            switch(topic){
-                case 'update':
-                    console.log('We have update: id ',options.target.id);
-                break;
-                case 'create':
-                    console.log('We have create: gid ',options.target.gid);
-                break;
-                case 'delete':
-                    console.log('We have delete: ', options.target.id);
-                break;
-                case 'find':
-                break;
-            }
-            console.log('*****************************************');
-        }
-    });
-    namespace['LocalStore'] = LocalStore;*/
+    
+    
 /////////////////////////////////////////////////////
 
     namespace[exportName]  = Model;
-})(jii, 'Model', 'Module');
+})(jii, 'Model', 'Module', 'PubSub');

@@ -19,6 +19,10 @@ In your web page:
 </script>
 ```
 
+## Roadmap, TODO:
+-  Compact modules in single file.
+
+
 ## Documentation
 _(Coming soon)_
 

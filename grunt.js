@@ -16,10 +16,11 @@ module.exports = function(grunt) {
         // src: ['<banner:meta.banner>', '<file_strip_banner:src/*.js>'],
         src: ['<banner:meta.banner>',
               'src/jii.js',
-              'src/pubsub.js',
               'src/module.js',
+              'src/pubsub.js',
               'src/model.js',
               'src/localstorage.js',
+              'src/rest.js',
               'src/!*.old.js'
             ],
         dest: 'dist/<%= pkg.name %>.js'
@@ -45,6 +46,7 @@ module.exports = function(grunt) {
       src : ['libs/jquery/jquery.js',
               'src/jii.js',
               'src/module.js',
+              'src/pubsub.js',
               'src/**/*.js',
               'src/!(*.old.js)'
       ],
