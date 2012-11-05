@@ -113,6 +113,9 @@
      *
      * TODO: Deal with attributes and relations. What if an
      *       attribute is an objecty? right now, we loose it.
+     * TODO: Hold fields in its own object, instead of assigning
+     *       them to the model instance. So they can be accessed
+     *       with modelInstance.fields()
      */
     var Model = Module( exportName ).extend({
         records:{},
@@ -519,7 +522,7 @@
             //TODO: Should we validate?!
             for(key in attr){
                 if(attr.hasOwnProperty(key)){
-                    console.log('We go for key: ', key);
+                    // console.log('We go for key: ', key);
                     value = attr[key];
                     if(typeof value === 'object') this.load(value);
                     else if(_isFunc(this[key])) this[key](value);

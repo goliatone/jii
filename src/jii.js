@@ -9,10 +9,10 @@ jii.utils = {
         Func.prototype = o;
         return new Func();
     },
-    hasOwn:function(scope,prop){
+    // hasOwn:function(scope,prop){
 
-       return Object.prototype.hasOwnProperty.call(scope,prop);
-    },
+    //    return Object.prototype.hasOwnProperty.call(scope,prop);
+    // },
     isEmpty:function(obj){
         if(!obj) return true;
         if(typeof obj === "string"){
@@ -20,21 +20,33 @@ jii.utils = {
             else return false;
         }
 
-        if(this.hasOwn(obj,'length') && obj.length === 0) return true;
+        if(obj.hasOwnProperty('length') && obj.length === 0) return true;
         var key;
         for(key in obj) {
-            if (this.hasOwn(obj,key)) return false;
+            if (obj.hasOwnProperty(key)) return false;
         }
         return true;
+    },
+    fixArguments:function(args){
+        var a = Array.prototype.splice.call(args,0);
+
+        if(!a[1] &&
+           _isArray(a[0]) &&
+           a.length === 1) return a[0];
+
+        return a;
     },
     hasAttributes:function(scope){
-        var attrs = Array.prototype.slice(arguments,1);
-        for(var prop in scope){
-            if(! this.hasOwn(scope, prop)) return false;
+        var attrs = Array.prototype.splice.call(arguments,1);
+        attrs = this.fixArguments(attrs);
+        for(var prop in attrs){
+            if(! (attrs[prop] in scope)) return false;
         }
         return true;
     },
-    isFunc:function(obj){
+    isFunc:function(obj, method){
+        if(method) return ( (method in obj) &&
+                             typeof obj[method] === 'function' );
 
         return (typeof obj === 'function');
     },
@@ -45,7 +57,20 @@ jii.utils = {
     getKeys:function(o){
         if (typeof o !== 'object') return null;
         var ret=[],p;
-        for(p in o) if(Object.prototype.hasOwnProperty.call(o,p)) ret.push(p);
+        for(p in o){
+            if(Object.prototype.hasOwnProperty.call(o,p)) ret.push(p);
+        }
+        return ret;
+    },
+    getKeysAll:function(o){
+        if (typeof o !== 'object') return null;
+        var ret={},p,i=0;
+        for(p in o){
+            if(Object.prototype.hasOwnProperty.call(o,p) &&
+               o[p] !== null &&
+                typeof o[p] === 'object' && !this.isArray(o[p])) ret[p] = this.getKeysAll(o[p]);
+            else if(Object.prototype.hasOwnProperty.call(o,p)) ret[i++] = p;
+        }
         return ret;
     },
     result:function(obj, property){

@@ -147,15 +147,18 @@
     
     
     REST.prototype.onSuccess = function(model, callback, data, textStatus, jqXHR){
-        console.clear();
-        console.log('on success');
-        console.log(arguments);
+        if(callback){
+            callback.apply(this, model, data, jqXHR, textStatus);
+        }
     };
 
     
     REST.prototype.onError = function(model, callback, jqXHR, textStatus, errorThrown){
+        //TODO, how do we handle this? We should push to the
+        //validation? etc...
+
         if(callback){
-            callback.apply(this, model, jqXHR, textStatus, errorThrown);
+            callback.apply(this, model, errorThrown, jqXHR, textStatus);
         }
             
     };

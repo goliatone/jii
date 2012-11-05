@@ -17,6 +17,14 @@ beforeEach(function() {
 
             return typeof this.actual === type;
         },
+        toBeCloneOf:function(source){
+            return this.actual.constructor === source.constructor &&
+                   this.actual.prototype   === source.prototype;
+        },
+        toNotBeCloneOf:function(source){
+            return this.actual.constructor !== source.constructor ||
+                   this.actual.prototype   !== source.prototype;
+        },
         toHaveLength: function(length) {
 
             return this.actual.length === length;
@@ -96,40 +104,8 @@ beforeEach(function() {
             }
             return true;
         },
-        ///////
-        //TODO: Make internal recursive method, so we can deep compare.
         toMatchObject:function(x){
-            //var p, s, actual = this.actual;
             return _deepEqual(this.actual, x);
-            /*
-            for(p in actual) {
-                if(typeof(x[p])=='undefined') {return false;}
-            }
-
-            for(p in actual) {
-                s = actual[p];
-                if (s) {
-                    switch(typeof(s)) {
-                        case 'object':
-                            if (!actual[p].equals(x[p])) { return false; } break;
-                        case 'function':
-                            if (typeof(x[p])=='undefined' ||
-                                (p != 'equals' && actual[p].toString() != x[p].toString()))
-                                return false;
-                        break;
-                        default:
-                            if (actual[p] != x[p]) { return false; }
-                    }
-                } else {
-                    if (x[p]) return false;
-                }
-            }
-
-            for(p in x) {
-                if(typeof(actual[p])=='undefined') {return false;}
-            }
-
-            return true; */
         },
         toNotMatchObject:function(object){
             return this.toMatchObject(object) === false;
@@ -137,7 +113,6 @@ beforeEach(function() {
         toNotMatch:function(object){
             return this.actual !== object;
         },
-        //////
         toThrowInstanceOf: function(klass) {
             try {
                 this.actual();
@@ -200,29 +175,19 @@ function _endsWith(haystack, needle){
 }
 
 function _deepEqual(a,b){
-    if (typeof a != "object" || typeof b != "object") {
-        return a === b;
-    }
+    if (typeof a != "object" ||
+     typeof b != "object") return a === b;
 
+    if (a === b) return true;
 
-    if (a === b) {
-        return true;
-    }
-
-    var aString = Object.prototype.toString.call(a);
-    if (aString != Object.prototype.toString.call(b)) {
-        return false;
-    }
+    var aString = {}.toString.call(a);
+    if (aString !={}.toString.call(b)) return false;
 
     if (aString == "[object Array]") {
-        if (a.length !== b.length) {
-            return false;
-        }
+        if (a.length !== b.length) return false;
 
         for (var i = 0, l = a.length; i < l; i += 1) {
-            if (!_deepEqual(a[i], b[i])) {
-                return false;
-            }
+            if (!_deepEqual(a[i], b[i])) return false;
         }
 
         return true;
@@ -231,20 +196,14 @@ function _deepEqual(a,b){
     var prop, aLength = 0, bLength = 0;
 
     for (prop in a) {
-        aLength += 1;
+        ++aLength;
 
-        if (!_deepEqual(a[prop], b[prop])) {
-            return false;
-        }
+        if (!_deepEqual(a[prop], b[prop])) return false;
     }
 
-    for (prop in b) {
-        bLength += 1;
-    }
+    for (prop in b) ++bLength;
 
-    if (aLength != bLength) {
-        return false;
-    }
+    if (aLength != bLength) return false;
 
     return true;
-};
+}

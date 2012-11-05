@@ -21,8 +21,19 @@ describe("Model", function(){
 		expect(user.modelName).toBe("User");
 	});
 
+	it("should assing a modelId to an instance on creation", function(){
+		expect(user.modelId).toBe("user");
+	});
+
 	it("should create attributes in model instance",function(){
 		expect(user.getAttributes()).toMatchObject(attributes);
+	});
+
+	it("should call init method on instances on the constructor",function(){
+		var spy = sinon.spy(User.prototype,'init');
+		user = new User(attributes);
+		var calledWithArgs = spy.args[0][0];
+		expect(calledWithArgs).toMatchObject(attributes);
 	});
 
 	it("should load constructor attributes",function(){
@@ -30,6 +41,13 @@ describe("Model", function(){
 		user = new User(attributes);
 		var calledWithArgs = spy.args[0][0];
 		expect(calledWithArgs).toMatchObject(attributes);
+	});
+
+	it("after load, attributes should be assigned to the instance",function(){
+		var spy = sinon.spy(User.prototype,'load');
+		user = new User(attributes);
+		var keys = jii.utils.getKeys(attributes);
+		expect(user).toHaveProperties(keys);
 	});
 
 	it("should assing a new gid on creation",function(){
