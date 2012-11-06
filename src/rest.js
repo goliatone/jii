@@ -1,6 +1,6 @@
 //TODO: Unify interface with localstorage
 (function(namespace, exportName, moduleName){
-    
+
     var Module = namespace[moduleName];
 
     var REST = Module(exportName);
@@ -12,7 +12,7 @@
      * @return {Function}
      */
     var _initializeActionMap = function(service){
-        
+
         //TODO: Use attributes and dirty elements from
         //model, so that we don't send everything back
         //to the server.
@@ -26,7 +26,7 @@
         };
 
         actionMap['read']   = {
-            url:'/api/{modelId}/',
+            url:'/api/{modelId}/{id}',
             type:'GET',
             data:null
         };
@@ -44,14 +44,14 @@
         };
 
         actionMap.compile = function(action, model){
-            
+
             var settings = actionMap[action];
             var options  = $.extend({}, settings);
 
 
             //Build data payload.
             if(options.data) options.data = service.buildPayload(options.data,model);
-            
+
             options.url  = service.buildUrl(options.url, model, service);
             return options;
         };
@@ -60,8 +60,8 @@
 
     };
 
-    var _initializeActionSettings = function(service, action, model, callback){
-        
+    var _initializeActionSettings = function(service, action, model, options){
+
         var actionOptions = service.actionMap.compile(action, model);
 
         var settings = {
@@ -74,8 +74,8 @@
             dataFilter:function(data, type){
                 return (/\S/).test(data) ? data : undefined;
             },
-            error:service.proxy(service.onError, model, callback),
-            success:service.proxy(service.onSuccess, model, callback)
+            error:service.proxy(service.onError, model, options),
+            success:service.proxy(service.onSuccess, model, options)
         };
 
         return settings;
@@ -88,9 +88,8 @@
      */
     REST.prototype.actionMap = {};
 
-    REST.prototype.init = function(ModelModule, resource, methods){
-        // this.resource    = resource;
-        this.modelModule = ModelModule;
+    REST.prototype.init = function(){
+        
         _initializeActionMap(this);
     };
 
@@ -100,8 +99,8 @@
         return JSON.stringify(model[method]());
     };
 
-
     REST.prototype.buildUrl = function(template, data, scope){
+        
         return this.parseUrl(template, data, scope);
     };
 
@@ -117,11 +116,9 @@
 
         return template.replace(/\{(\w+)\}(\.(\w+))?/g, replaceFn);
     };
-    
-   
-    
-    REST.prototype.service = function(action, model, options, callback){
-        
+
+    REST.prototype.service = function(action, model, options){
+
         //TODO: How do we merge options.data and compiled data?
         //TODO: Add support for search. How do we serialize params?!
         //TODO: We should get data, then merge from options, and
@@ -132,35 +129,36 @@
         //     data = $.merge(data, options.data);
         // }
         // data = options.data;
-
-        var settings = _initializeActionSettings(this, action, model, callback);
+        // if(options && options.success) callback = options.success;
+        var settings = _initializeActionSettings(this, action, model, options);
         console.log(settings);
 
-        if(options)
-            settings = $.merge(settings, options);
+        if(options && options.settings)
+            settings = $.merge(settings, options.settings);
 
         console.log(settings);
-        
+
         //TODO: Make this.transport(settings) => REST.proto.transport = $.ajax;?
         $.ajax(settings);
     };
-    
-    
-    REST.prototype.onSuccess = function(model, callback, data, textStatus, jqXHR){
-        if(callback){
-            callback.apply(this, model, data, jqXHR, textStatus);
+
+
+    REST.prototype.onSuccess = function(model, options, data, textStatus, jqXHR){
+        
+        if(options && options.onSuccess){
+            options.onSuccess(data, model, jqXHR, textStatus);
         }
     };
 
-    
-    REST.prototype.onError = function(model, callback, jqXHR, textStatus, errorThrown){
+
+    REST.prototype.onError = function(model, options, jqXHR, textStatus, errorThrown){
         //TODO, how do we handle this? We should push to the
         //validation? etc...
 
-        if(callback){
-            callback.apply(this, model, errorThrown, jqXHR, textStatus);
+        if(options && options.onError){
+            options.onError(model, errorThrown, jqXHR, textStatus);
         }
-            
+
     };
 
     REST.prototype.create = function(model, options, callback){

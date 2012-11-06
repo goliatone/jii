@@ -131,6 +131,91 @@ describe("Jii utils",function(){
 		expect(u.capitalize('hello World')).toBe('Hello World');
 	});
 
+
+	it("should have a map method",function(){
+		expect(u).toHaveMethods('map');
+	});
+
+	it("map should run a suplied callback on each item of an array",function(){
+		var mapped   = [];
+		var source   = [0,1,2,3,4,5];
+		var expected = [10,11,12,13,14,15];
+
+		var scope = {};
+		scope.callback = function(item, index, source){
+			return item + 10;
+		};
+		var spy = sinon.spy(scope, 'callback');
+
+		mapped = u.map(source, scope.callback, scope);
+		expect(mapped).toMatch(expected);
+		expect(spy).toHaveBeenCalled();
+		expect(spy).toHaveBeenCalledXTimes(source.length);
+		expect(spy.args[0]).toHaveLength(3);
+	});
+
+
+	it("should have a merge method",function(){
+		expect(u).toHaveMethods('merge');
+	});
+
+	it("merge method should merge own properties of b into a",function(){
+		var a = {over:false,name:'pepe'};
+		var b = {over:true, age:23};
+		var e = {over:true,name:'pepe',age:23};
+
+		expect(u.merge(a,b)).toMatchObject(e);
+	});
+
+
+	it("shold have a intersect method",function(){
+		expect(u).toHaveMethods('intersect');
+	});
+
+	it("intersect should return an array containing items in two arrays",function(){
+		var a = [1,2,3];
+		var b = [1,4,5];
+		var e = [1];
+		expect(u.intersect(a,b)).toMatch(e);
+		//u.intersect(a,b);
+	});
+
+
+	it("should have a firstToLowerCase method",function(){
+		expect(u).toHaveMethods('firstToLowerCase');
+	});
+
+	it("firstToLowerCase should turn first char to lowercase",function(){
+		var source = 'HelloWorld';
+		var expctd = 'helloWorld';
+		expect(u.firstToLowerCase(source)).toBe(expctd);
+	});
+
+
+	it("should have a ensureNamespace method",function(){
+		expect(u).toHaveMethods('ensureNamespace');
+	});
+
+
+	it("ensureNamespace should create a namespace out of a chain string",function(){
+		var namespace = 'a.b.c';
+		var scope = {};
+		var exp = {a:{b:{c:{}}}};
+		u.ensureNamespace(namespace,scope);
+		expect(scope).toMatchObject(exp);
+	});
+
+	it("should have a resolvePropertyChain method",function(){
+		expect(u).toHaveMethods('resolvePropertyChain');
+	});
+
+	it("resolvePropertyChain given a scope and a chain string, return its value",function(){
+		var scope = {a:{b:{c:{d:3}}}};
+		var chain = 'a.b.c.d';
+		var expct = 3;
+		expect(u.resolvePropertyChain(scope,chain)).toBe(expct);
+	});
+
 	it("should have a hasOwn method",function(){
 		// expect(u).toHaveMethods('hasOwn');
 	});

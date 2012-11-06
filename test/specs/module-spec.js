@@ -39,7 +39,7 @@ describe("jii.Module", function(){
 
     it("classes have a magic name propertie",function(){
         var k9 = new Animal();
-        expect(Animal.__name__ === "Animal").toBeTruthy(); 
+        expect(Animal.__name__ === "Animal").toBeTruthy();
         expect(Animal.__name__ === k9.__name__).toBeTruthy();
     })
 
@@ -67,18 +67,18 @@ describe("jii.Module", function(){
 
     it("subclasses inherit instance properties",function(){
         var milu = new Dog('milu');
-        var animal = new Animal()
+        var animal = new Animal();
         expect(milu.type).toBe(animal.type);
     });
 
-    it("we can call super on methods",function(){      
+    it("we can call super on methods",function(){
         var milu = new Dog("milu");
         expect(milu.callSuper()).toBe(milu.makeNoise());
         //expect(milu.name).toBe("parent: milu");
     });
 
     it("we can extend classes with static properties",function(){
-        
+
         expect(Animal.animalType()).toBe(Animal.__class__);
     });
 
@@ -88,5 +88,56 @@ describe("jii.Module", function(){
     });
 
 
+    it("should fire extended callback after extend",function(){
+        var called = false;
+        var staticMembers = {
+            extended:function(self){
+                called = true;
+            },
+            method:function(){}
+        };
+        var C = jii.Module('C').extend(staticMembers);
+        var ci = new C();
+        expect(called).toBeTruthy();
+    });
+
+    it("should fire extended with the right scope",function(){
+        var scoped = false;
+        var staticMembers = {
+            extended:function(self){
+                scoped = this.__name__;
+            },
+            method:function(){}
+        };
+        var C = jii.Module('C').extend(staticMembers);
+        var ci = new C();
+        expect(scoped).toBe('C');
+    });
+
+    it("should fire included callback after include",function(){
+        var called = false;
+        var instanceMembers = {
+            included:function(self){
+                called = true;
+            },
+            method:function(){}
+        };
+        var C = jii.Module('C').include(instanceMembers);
+        var ci = new C();
+        expect(called).toBeTruthy();
+    });
+
+    it("should fire included with the right scope",function(){
+        var scoped = false;
+        var instanceMembers = {
+            included:function(self){
+                scoped = this.ctor.__name__;
+            },
+            method:function(){}
+        };
+        var C = jii.Module('C').include(instanceMembers);
+        var ci = new C();
+        expect(scoped).toBe('C');
+    });
 
 });

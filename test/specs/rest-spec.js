@@ -149,7 +149,7 @@ describe('REST', function(){
 		server.respond();
 		expect(server.requests.length).toBe(1);
 		expect(server.requests[0].method).toMatchObject('GET');
-		expect(server.requests[0].url).toMatchObject('/api/user/');
+		expect(server.requests[0].url).toMatchObject('/api/user/'+user.id);
 	});
 
 	it("should handle UPDATE requests",function(){
