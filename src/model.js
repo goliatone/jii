@@ -51,7 +51,7 @@
 
         return Object.prototype.toString.call(value) === '[object Array]';
     };
-    
+
     var _getKeys = function(o){
         if (typeof o !== 'object') return null;
         var ret=[],p;
@@ -113,6 +113,9 @@
      *
      * TODO: Deal with attributes and relations. What if an
      *       attribute is an objecty? right now, we loose it.
+     * TODO: Hold fields in its own object, instead of assigning
+     *       them to the model instance. So they can be accessed
+     *       with modelInstance.fields()
      */
     var Model = Module( exportName ).extend({
         records:{},
@@ -129,7 +132,7 @@
             if(_hasOwn(config, 'attributes'))
                 this.extend(config.attributes, this.attributes);
                 //$.extend(true,this.attributes,config.attributes);
-            
+
 
             // this.attributes = config.attributes;
             // this.unbind();
@@ -206,10 +209,10 @@
                     //and move on
                     continue;
                 }
-                
+
                 //subscribe to updates
                 record.subscribe('all', this._handleModel, this, options);
-                
+
                 //Nofity we are adding the record.
                 // this.dispacher.publish('added', record);
 
@@ -247,7 +250,7 @@
 
             var r;
             if((r = this.records[id])) return r;
-             
+
             //at this point we know that it has to be a ghost one
             return this.grecords[id];
         },
@@ -260,18 +263,18 @@
             return id;
         },
         has:function(id){
-            
+
             if(!id) return false;
 
             id = this.ensureId(id);
-            
+
             //how do we want to handle errors!?
             return _hasOwn(this.records,id) || _hasOwn(this.grecords,id);
         },
         count:function(gRecords){
             var t = 0, p,rec;
             rec = gRecords ? this.grecords : this.records;
-        
+
             for(p in rec){
                 if(rec.hasOwnProperty(p))
                     t++;
@@ -284,7 +287,7 @@
             if(!this.has(id)) return null;
 
             var r = this.get(id);
-            
+
             //remove all listeners
             r.unsubscribe('all',this.proxy(this._handleModel));
 
@@ -311,7 +314,7 @@
 
             }
         },
-        
+
     ////////////////////////////////////////////////////////////
     //// ArrayCollection Stuff.
     ////////////////////////////////////////////////////////////
@@ -346,28 +349,36 @@
             return this.recordsValues().length;
         },*/
     ////////////
-        
+
         toJSON:function(){
 
             return this.recordsValues();
         },
         fromJSON:function(objects){
-            if(!objects) return;
+            if(!objects) return null;
+
+            console.log('FROM FUCKING JSON');
 
             if(typeof objects === 'string'){
-                objects = JSON.parse(objects);
+                console.log(objects);
+                try{
+                    objects = JSON.parse(objects);
+                } catch(e) {
+                    console.log('Error! ',objects);
+                }
             }
+
             if(_isArray(objects)){
                 var result = [];
                 var i = 0, l = objects.length;
                 var value;
                 for(; i < l; i++){
                     value = objects[i];
-                    result.push(new this(value));
+                    result.push(new this(value, {skipSync:true}));
                 }
                 return result;
             } else {
-                return new this(objects);
+                return [new this(objects, {skipSync:true})];
             }
         },
         fromForm:function(selector){
@@ -392,14 +403,15 @@
         validators:{},
         scenario:null,
         init:function(attrs, options){
-            
             this.modelName = _capitalize(this.__name__);
             this.modelId   = _firstToLowerCase(this.__name__);
 
             this.clearErrors();
 
             if(attrs) this.load(attrs,options);
-            
+
+            console.log('CREATE MODEL, ',this.gid);
+
             this.gid = this.ctor.makeGid();
             // if(attrs && attrs.hasOwnProperty('gid'))
             //     this.gid = attrs.gid;
@@ -422,7 +434,7 @@
             validators = this.getValidators();
 
             //if(this.beforeValidate()) return false;
-            
+
             for(prop in validators){
                 if(validators.hasOwnProperty(prop)){
                     validator = validators[prop];
@@ -519,7 +531,7 @@
             //TODO: Should we validate?!
             for(key in attr){
                 if(attr.hasOwnProperty(key)){
-                    console.log('We go for key: ', key);
+                    // console.log('We go for key: ', key);
                     value = attr[key];
                     if(typeof value === 'object') this.load(value);
                     else if(_isFunc(this[key])) this[key](value);
@@ -674,9 +686,9 @@
             return this.load(records);
         }
     });
-    
+
     Model.include(namespace.PubSub.mixins['pubsub']);
-    
+
     //TODO: Parse attributes, we want to have stuff
     //like attribute type, and validation info.
     Model.prototype.metadata = function(meta){
@@ -711,24 +723,32 @@
 //// relational: https://github.com/lyonbros/composer.js/blob/master/composer.relational.js
 /////////////////////////////////////////////////////
     var ActiveRecord = Module('ActiveRecord', Model).extend({
+
         extended:function(){
             //This works OK, it gets called just after it
             //has been extended.
-            //this.reset();
+
             this.stores = [];
         },
 ////////////////////////////////////////////////////////////////////////
 //////// PERHAPS MOVE THIS INTO A STORE IMP.?
 //////// WE CAN HAVE LOCALSTORE, RESTSTORE, ETC...
 ////////////////////////////////////////////////////////////////////////
-        parseUrl:function( template, data){
-            function replaceFn() {
-                var prop = arguments[1];
-                return (prop in data) ? data[prop] : '';
-            }
-            return template.replace(/\{(\w+)\}/g, replaceFn);
+        ensureDefaultOptions:function(options){
+            options = options || {};
+
+            if(!_isFunc(options, 'onError'))
+                options.onError = this.proxy(this.onError);
+            
+
+            return options;
+        },
+        onError:function(model, errorThrown, xhr, statusText){
+            console.log(this.__name__+' error: '+errorThrown, ' status ', statusText);
         },
         getService:function(){
+            if(!this._service)
+                this._service = new jii.REST();
             return this._service;
         },
         setService:function(factory){
@@ -740,70 +760,9 @@
             return this;
         },
         service:function(action, model, options){
-            //
-            // this._service.apply(this, arguments);
+           options = this.ensureDefaultOptions(options);
 
-            options = options || {};
-
-            console.log('____________________________');
-            console.log('SYNC: called with arguments: ',arguments, new Date().valueOf());
-            var actionMap = {};
-            actionMap['create'] = {
-                url:'/api/{model}/',
-                type:'POST'
-            };
-            actionMap['read']   = {
-                url:'/api/{model}/',
-                type:'GET'
-            };
-            actionMap['update'] = {
-                url:'/api/{model}/{id}',
-                type:'PUT'
-            };
-            actionMap['destroy'] = {
-                url:'/api/{model}/{id}',
-                type:'DELETE'
-            };
-
-
-            var data = {model:null, action:action,id:model.id};
-            data.model = _firstToLowerCase(model.modelName);
-
-            var url = this.parseUrl(actionMap[action].url, data);
-
-            switch(action){
-                case 'create':
-                    //
-
-                break;
-
-                case 'read':
-                    //
-                    if(options.id) url = url + options.id;
-                break;
-
-                case 'update':
-                    //
-                break;
-
-                case 'delete':
-                case 'destroy':
-                    //
-                break;
-
-                default:
-                    return;
-
-            }
-            console.log('url: ',url);
-            $.ajax({
-                url:url,
-                type:actionMap[action].type,
-                success:options.success,
-                error:function(){console.log('error');}
-            });
-            console.log('____________________________');
-            
+            this.getService().service(action, model, options);
         },
         update:function(id, attributes, options){
             var record = this.find(id);
@@ -813,7 +772,8 @@
             return record;
         },
         create:function(attributes, options){
-            options = options || {};
+            options = this.ensureDefaultOptions(options);
+
             var record = new this(attributes);
             //Perhaps, instead of save, we need to load
             //the attributes, we dont want to trigger an
@@ -826,32 +786,35 @@
             if(record) record.destroy(options);
             return record;
         },
-        change:function(callbackOrParams){
+        change:function(){
             if(_isFunc(callbackOrParams)){
                 // return this.bind('change', callbackOrParams);
             } else {
                 // return this.publish('change', callbackOrParams);
             }
         },
-        fetch:function(id, options, callbackOrParams){
-            options = options || {};
-            
-            if(id) options.id = id;
+        fetch:function(id, options){
+            //TODO: Here, we can have:
+            // id => fk, options REST options
+            // id => object being SEARCH query.
+            options = this.ensureDefaultOptions(options);
+
+            var model = new this();
+
+            if(id) model.id = id;
 
             var self = this;
-            options.success = function(data){
-                console.log('on fetch success ',data);
+            options.onSuccess = function(data){
+                console.log('on fetch success ',arguments);
+                //we should ensure that data is in the right
+                //format.
+                //if(typeof data === 'object')
+                //self.load(data);
                 self.fromJSON(data);
 
             };
-
-            this.service('read', new this(),options);
-            // if(_isFunc(callbackOrParams)){
-            //     // return this.bind('fetch', callbackOrParams);
-            // } else {
-
-            //     //return this.publish('fetch', callbackOrParams);
-            // }
+            
+            this.service('read', model, options);
         },
         find:function(idOrGid){
             var record = this.records[idOrGid];
@@ -952,8 +915,7 @@
         },
         destroyAll:function(){
             var r = this.records;
-            var key, value;
-            var result = [];
+            var key, value, result = [];
             for( key in r){
                 if(r.hasOwnProperty(key)){
                     value = r[key];
@@ -967,15 +929,15 @@
         service:function(){
             this.ctor.service.apply(this.ctor, arguments);
         },
-        
+
         refresh:function(){
 
         },
         fetch:function(options){
             options = options || {};
             var model = this;
-            var successCallback = options.success;
-            options.success = function(resp, status, xhr){
+            var successCallback = options.onSuccess;
+            options.onSuccess = function(resp, status, xhr){
                 //handle response data
                 model.load(resp);
                 if(successCallback) successCallback(model, resp, options);
@@ -997,7 +959,7 @@
             this.publish('beforeSave');
 
             var action = this.isNewRecord() ? 'create' : 'update';
-            
+
             //TODO: Refactor this!!!!
             if(action === 'update' ) options.skipSync = true;
 
@@ -1057,8 +1019,8 @@
             if(options.skipDestroy) return this;
 
             var model = this;
-            var successCallback = options.success;
-            options.success = function(resp){
+            var successCallback = options.onSuccess;
+            options.onSuccess = function(resp){
                 if(successCallback) successCallback(model, resp, options);
             };
 
@@ -1071,12 +1033,11 @@
             return this;
         }
     });
-    
 /////////////////////////////////////////////////////
 //// SYNC LAYER
 /////////////////////////////////////////////////////
-    
-    
+
+
 /////////////////////////////////////////////////////
 
     namespace[exportName]  = Model;

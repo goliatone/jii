@@ -18,9 +18,9 @@ module.exports = function(grunt) {
               'src/jii.js',
               'src/module.js',
               'src/pubsub.js',
+              'src/rest.js',
               'src/model.js',
               'src/localstorage.js',
-              'src/rest.js',
               'src/!*.old.js'
             ],
         dest: 'dist/<%= pkg.name %>.js'
@@ -47,6 +47,7 @@ module.exports = function(grunt) {
               'src/jii.js',
               'src/module.js',
               'src/pubsub.js',
+              'src/rest.js',
               'src/**/*.js',
               'src/!(*.old.js)'
       ],

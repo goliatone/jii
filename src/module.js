@@ -3,10 +3,10 @@
     var _splice = Array.prototype.splice;
 
     var Module = function(name, parent){
-        
+
         // if(namespace[name])
             // return name;
-            
+
         //Lets figure out parent.
         //TODO: Add support for com.domain.Module.
         //parent = parent.split('.');
@@ -16,7 +16,7 @@
         if(typeof parent === 'string'){
             parent = namespace[parent];
         }
-        
+
         var self = function(){
             if("init" in this) this.init.apply(this, arguments);
         };
@@ -31,28 +31,25 @@
                     self[i] = Module.clone(parent[i]);
                 }
             }
-            
+
             for( i in parent.prototype){
                 if(parent.prototype.hasOwnProperty(i)){
                     self.prototype[i] = Module.clone(parent.prototype[i]);
                 }
             }
-            
-            // self._super = parent;
-           
-            
+
             var Ctor = function(){
                 this.ctor = this.constructor = self;
             };
             Ctor.prototype = parent.prototype;
             self.prototype = new Ctor();
-            
+
             //We need to create super after proto.
             //self._super = parent;
             self.prototype._super = parent.prototype;
         }
-        
-        
+
+
     //------------------------------
     // Adding class/static properties: i.e: User.findByPk().
         self.extend = function(obj, target){
@@ -63,8 +60,8 @@
                     target[i] = obj[i];
             }
 
-            if(extended) extended(target);
-            
+            if(extended) extended.call(target,target);
+
             return target;
         };
     //  -----------------------------------
@@ -83,8 +80,8 @@
                 if(obj.hasOwnProperty(i))
                     self.fn[i] = obj[i];
             }
-            if(included) included(self);
-            
+            if(included) included.call(self.fn, self.fn);
+
             return self;
         };
 
@@ -107,24 +104,25 @@
             };
         };
 
-        
+
         //shortcuts.
         self.fn = self.prototype;
         self.fn.parent = parent;
         self.fn.proxy  = self.proxy;
-        
-        
+
+
         // The class/parent name
         self.prototype.__name__  = self.__name__  = name;
         self.prototype.__class__ = self;
 
         //Store a reference by name in the provided namespace.
         namespace[name] = self;
-        
+
         return self;
     };
 
     Module.__name__    = 'Module';
+    //REVIEW: Should we have a per module or use jii.VERSION?
     Module.__version__ = "0.0.1";
 
     Module.decorator = function(implementation){
@@ -136,7 +134,7 @@
                implementation( arguments[i], this );
             }
         };
-        
+
         return new Decorator();
     };
 
@@ -160,7 +158,7 @@
         return jQuery.extend({}, obj);
     };
 
-    
+
     /*Module.merge = function(){
         console.log(_splice.call(arguments,0))
         return jQuery.extend.apply(jQuery, _splice.call(arguments,0));
