@@ -91,17 +91,18 @@ describe('REST', function(){
                                 [200, { "Content-Type": "application/json" },
                                  JSON.stringify([userVO])
                                 ]);
-		var callback = sinon.spy();
+		var scope = {};
+		scope.onSuccess = sinon.spy();
 		var spy = sinon.spy(REST,'onSuccess');
 
-		REST.create(user, {}, callback);
+		REST.create(user, scope);
 		server.respond();
 		var calledWithArgs = spy.args[0];
 		expect(spy).toHaveBeenCalled();
 		// model
 		expect(calledWithArgs[0]).toBe(user);
-		// callback
-		expect(calledWithArgs[1]).toBe(callback);
+		// options
+		expect(calledWithArgs[1]).toBe(scope);
 		// data
 		expect(calledWithArgs[2]).toBeTruthy();
 		expect(calledWithArgs[2]).toMatchObject([userVO]);
@@ -116,17 +117,18 @@ describe('REST', function(){
                                 [500, { "Content-Type": "application/json" },
                                  JSON.stringify({error:true,message:'On Error'})
                                 ]);
-		var callback = sinon.spy();
+		var scope = {};
+		scope.onError = sinon.spy();
 		var spy = sinon.spy(REST,'onError');
 
-		REST.create(user, {}, callback);
+		REST.create(user, scope);
 		server.respond();
 		var calledWithArgs = spy.args[0];
 		expect(spy).toHaveBeenCalled();
 		// model
 		expect(calledWithArgs[0]).toBe(user);
 		// callback
-		expect(calledWithArgs[1]).toBe(callback);
+		expect(calledWithArgs[1]).toBe(scope);
 		// jqXHR
 		expect(calledWithArgs[2]).toBeTruthy();
 		// textStatus
@@ -136,7 +138,7 @@ describe('REST', function(){
 		expect(calledWithArgs[4]).toBe("Internal Server Error");
 
 		//TODO: Check params.
-		expect(callback).toHaveBeenCalled();
+		expect(scope.onError).toHaveBeenCalled();
 	});
 
 	it("should handle READ requests",function(){

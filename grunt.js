@@ -8,8 +8,11 @@ module.exports = function(grunt) {
       banner: '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
         '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
         '<%= pkg.homepage ? "* " + pkg.homepage + "\n" : "" %>' +
-        '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
-        ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */'
+        '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;\n' +
+        ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */\n'+
+        'var VERSION = "<%= pkg.version %>";\n'+
+        'var jii = (function(namespace){\n',
+      footer: '})("jii");'
     },
     concat: {
       dist: {
@@ -18,10 +21,12 @@ module.exports = function(grunt) {
               'src/jii.js',
               'src/module.js',
               'src/pubsub.js',
+              'src/basemodule.js',
               'src/rest.js',
               'src/model.js',
               'src/localstorage.js',
-              'src/!*.old.js'
+              'src/!*.old.js',
+              '<banner:meta.footer>'
             ],
         dest: 'dist/<%= pkg.name %>.js'
       }
@@ -47,6 +52,7 @@ module.exports = function(grunt) {
               'src/jii.js',
               'src/module.js',
               'src/pubsub.js',
+              'src/basemodule.js',
               'src/rest.js',
               'src/**/*.js',
               'src/!(*.old.js)'

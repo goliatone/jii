@@ -117,7 +117,7 @@
      *       them to the model instance. So they can be accessed
      *       with modelInstance.fields()
      */
-    var Model = Module( exportName ).extend({
+    var Model = Module( exportName, 'BaseModule' ).extend({
         records:{},
         grecords:{},
         attributes:[],
@@ -420,10 +420,10 @@
             this.ctor.add(this);
 
         },
-        log:function(){
+        /*log:function(){
             if(this.debug === false || !window.console) return;
             window.console.log.apply(window.console, arguments);
-        },
+        },*/
     ////////////////////////////////////////////////////////
     //// VALIDATION: Todo, move to it's own module.
     ////////////////////////////////////////////////////////
@@ -677,6 +677,9 @@
             return '['+this.__name__+' => '+" ]";
             //return "<" + this.constructor.className + " (" + (JSON.stringify(this)) + ")>";
         },
+        toJSONString:function(){
+            return JSON.stringify(this.getAttributes());
+        },
         toJSON:function(){
 
             return this.getAttributes();
@@ -686,8 +689,8 @@
             return this.load(records);
         }
     });
-
-    Model.include(namespace.PubSub.mixins['pubsub']);
+    
+    // Model.include(namespace.PubSub.mixins['pubsub']);
 
     //TODO: Parse attributes, we want to have stuff
     //like attribute type, and validation info.
@@ -787,11 +790,11 @@
             return record;
         },
         change:function(){
-            if(_isFunc(callbackOrParams)){
+           /* if(_isFunc(callbackOrParams)){
                 // return this.bind('change', callbackOrParams);
             } else {
                 // return this.publish('change', callbackOrParams);
-            }
+            }*/
         },
         fetch:function(id, options){
             //TODO: Here, we can have:

@@ -2,10 +2,10 @@
 <testsuites>
 <testsuite name="PubSub" errors="0" tests="11" failures="1" time="0.011" timestamp="[object Object]">
   <testcase classname="PubSub" name="We can extend simple objects with pubsub cap." time="0.001"></testcase>
-  <testcase classname="PubSub" name="objects can subscribe to a pubsub instance" time="0.001"></testcase>
-  <testcase classname="PubSub" name="objects can unsubscribe from a pubsub instance" time="0"></testcase>
+  <testcase classname="PubSub" name="objects can subscribe to a pubsub instance" time="0"></testcase>
+  <testcase classname="PubSub" name="objects can unsubscribe from a pubsub instance" time="0.001"></testcase>
   <testcase classname="PubSub" name="objects get notified of publisehd topics" time="0.001"></testcase>
-  <testcase classname="PubSub" name="objects get notified of publisehd topics" time="0.002"></testcase>
+  <testcase classname="PubSub" name="objects get notified of publisehd topics" time="0.001"></testcase>
   <testcase classname="PubSub" name="a handler can abort the publish loop" time="0.001"></testcase>
   <testcase classname="PubSub" name="should route all notices to a single handler if subscribed to the * channel" time="0.001"></testcase>
   <testcase classname="PubSub" name="should have a fluid interface" time="0.001"></testcase>

@@ -485,7 +485,6 @@ jii.utils = {
     namespace[exportName] = PubSub;
 
 })(jii,'PubSub', 'Module');
-
 (function(namespace, exportName, moduleName){
 	var Module = namespace[moduleName];
 

@@ -68,7 +68,7 @@
         return Object.prototype.toString.call(value) === '[object Array]';
     };
 
-    var LocalStore = Module(exportName).include({
+    var LocalStore = Module(exportName, 'BaseModule').include({
         init:function init(ModelModule){
             this.modelModule  = ModelModule;
             this.collectionId = ModelModule.__name__+"-collection";
