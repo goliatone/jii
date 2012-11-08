@@ -747,18 +747,22 @@
             return options;
         },
         onError:function(model, errorThrown, xhr, statusText){
-            console.log(this.__name__+' error: '+errorThrown, ' status ', statusText);
+            this.log(this.__name__+' error: '+errorThrown, ' status ', statusText);
         },
         getService:function(){
             if(!this._service)
-                this._service = new jii.REST();
+                //TODO: Global dependency!
+                this.setService(new jii.REST());
+
             return this._service;
         },
-        setService:function(factory){
+        setService:function(service){
             //
-            var args = Array.prototype.slice.call(arguments,1);
-            args.unshift(this);
-            this._service = factory.apply(factory, args);
+            // var args = Array.prototype.slice.call(arguments,1);
+            // args.unshift(this);
+            // this._service = factory.apply(factory, args);
+            this._service = service;
+            // this._service.subscribe()
 
             return this;
         },
@@ -783,6 +787,9 @@
             //update/create here!
             options.skipSync = true;
             return record.save(options);
+        },
+        load:function(attributes){
+            return new this(attributes);
         },
         destroy:function(id, options){
             var record = this.find(id);

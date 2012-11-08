@@ -99,17 +99,19 @@ describe('REST', function(){
 		server.respond();
 		var calledWithArgs = spy.args[0];
 		expect(spy).toHaveBeenCalled();
+		// action
+		expect(calledWithArgs[0]).toBe('create');
 		// model
-		expect(calledWithArgs[0]).toBe(user);
+		expect(calledWithArgs[1]).toBe(user);
 		// options
-		expect(calledWithArgs[1]).toBe(scope);
+		expect(calledWithArgs[2]).toBe(scope);
 		// data
-		expect(calledWithArgs[2]).toBeTruthy();
-		expect(calledWithArgs[2]).toMatchObject([userVO]);
+		expect(calledWithArgs[3]).toBeTruthy();
+		expect(calledWithArgs[3]).toMatchObject([userVO]);
 		// textStatus
-		expect(calledWithArgs[3]).toBe("success");
+		expect(calledWithArgs[4]).toBe("success");
 		// jqXHR
-		expect(calledWithArgs[4]).toBeTruthy();
+		expect(calledWithArgs[5]).toBeTruthy();
 	});
 
 	it("unsucssesful CREATE request should trigger onError",function(){
@@ -125,17 +127,19 @@ describe('REST', function(){
 		server.respond();
 		var calledWithArgs = spy.args[0];
 		expect(spy).toHaveBeenCalled();
+		// action
+		expect(calledWithArgs[0]).toBe('create');
 		// model
-		expect(calledWithArgs[0]).toBe(user);
+		expect(calledWithArgs[1]).toBe(user);
 		// callback
-		expect(calledWithArgs[1]).toBe(scope);
+		expect(calledWithArgs[2]).toBe(scope);
 		// jqXHR
-		expect(calledWithArgs[2]).toBeTruthy();
+		expect(calledWithArgs[3]).toBeTruthy();
 		// textStatus
-		expect(calledWithArgs[3]).toBe("error");
+		expect(calledWithArgs[4]).toBe("error");
 		// errorThrown
 		// TODO: Map error # to msgs.
-		expect(calledWithArgs[4]).toBe("Internal Server Error");
+		expect(calledWithArgs[5]).toBe("Internal Server Error");
 
 		//TODO: Check params.
 		expect(scope.onError).toHaveBeenCalled();

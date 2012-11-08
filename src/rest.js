@@ -74,8 +74,8 @@
             dataFilter:function(data, type){
                 return (/\S/).test(data) ? data : undefined;
             },
-            error:service.proxy(service.onError, model, options),
-            success:service.proxy(service.onSuccess, model, options)
+            error:service.proxy(service.onError, action, model, options),
+            success:service.proxy(service.onSuccess, action, model, options)
         };
 
         return settings;
@@ -143,15 +143,20 @@
     };
 
 
-    REST.prototype.onSuccess = function(model, options, data, textStatus, jqXHR){
+    REST.prototype.onSuccess = function(action, model, options, data, textStatus, jqXHR){
         
+        this.publish(action+":success", data, model, jqXHR, textStatus);
+
         if(options && options.onSuccess){
             options.onSuccess(data, model, jqXHR, textStatus);
         }
     };
 
 
-    REST.prototype.onError = function(model, options, jqXHR, textStatus, errorThrown){
+    REST.prototype.onError = function(action, model, options, jqXHR, textStatus, errorThrown){
+        
+        this.publish(action+":error", model, jqXHR, textStatus);
+
         //TODO, how do we handle this? We should push to the
         //validation? etc...
 
@@ -161,20 +166,20 @@
 
     };
 
-    REST.prototype.create = function(model, options, callback){
-        return this.service('create', model, options, callback);
+    REST.prototype.create = function(model, options){
+        return this.service('create', model, options);
     };
 
-    REST.prototype.read = function(model, options, callback){
-        return this.service('read', model, options, callback);
+    REST.prototype.read = function(model, options){
+        return this.service('read', model, options);
     };
 
-    REST.prototype.update = function(model, options, callback){
-        return this.service('update', model, options, callback);
+    REST.prototype.update = function(model, options){
+        return this.service('update', model, options);
     };
 
-    REST.prototype.destroy = function(model, options, callback){
-        return this.service('destroy', model, options, callback);
+    REST.prototype.destroy = function(model, options){
+        return this.service('destroy', model, options);
     };
 
     REST.prototype.handle302 = function(){

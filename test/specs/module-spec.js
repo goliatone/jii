@@ -8,6 +8,9 @@ describe("jii.Module", function(){
             }
         }).include({
             type:"Animal",
+            init:function(){
+                
+            },
             makeNoise:function(){
                 return 'parent';
             }
@@ -15,6 +18,9 @@ describe("jii.Module", function(){
         Dog = jii.Module('Dog','Animal').include({
             init:function(name){
                 this.name = name;
+
+                if("init" in this._super)
+                    this._super.init(arguments);
             },
             bark:function(){
                 return this.name;
@@ -37,11 +43,27 @@ describe("jii.Module", function(){
         expect(Animal).toBeTruthy();
     });
 
+
+    it("should have a prototype shortcut fn ",function(){
+        expect(Animal.fn).toBeTruthy();
+        expect(Animal.prototype).toMatchObject(Animal.fn);
+    });
+
+
+
+    it("should have a __class__ prop",function(){
+        expect(Animal.fn).toHaveProperties('__class__');
+    });
+
+    it("should have a static __name__ prop",function(){
+        expect(Animal).toHaveProperties('__name__');
+    });
+
     it("classes have a magic name propertie",function(){
         var k9 = new Animal();
         expect(Animal.__name__ === "Animal").toBeTruthy();
         expect(Animal.__name__ === k9.__name__).toBeTruthy();
-    })
+    });
 
     it("can create subclasses", function(){
         var dog = new Dog();
@@ -77,6 +99,17 @@ describe("jii.Module", function(){
         //expect(milu.name).toBe("parent: milu");
     });
 
+
+    it("init should be callable through _super",function(){
+        var as = sinon.spy(Animal.prototype, 'init');
+        var ds = sinon.spy(Dog.prototype, 'init');
+
+        var milu = new Dog('milu');
+
+        expect(as).toHaveBeenCalled();
+        expect(ds).toHaveBeenCalled();
+    });
+
     it("we can extend classes with static properties",function(){
 
         expect(Animal.animalType()).toBe(Animal.__class__);
@@ -87,6 +120,16 @@ describe("jii.Module", function(){
         expect(Cat.animalType()).toBe(Animal.__class__);
     });
 
+
+    it("should have a instance attribute parent ",function(){
+        expect(Dog.fn).toHaveProperties('parent');
+        expect(Dog.prototype).toHaveProperties('parent');
+    });
+
+    it("should have a proxy method",function(){
+        expect(Animal.prototype).toHaveMethods('proxy');
+        expect(Animal).toHaveMethods('proxy');
+    });
 
     it("should fire extended callback after extend",function(){
         var called = false;
@@ -139,5 +182,33 @@ describe("jii.Module", function(){
         var ci = new C();
         expect(scoped).toBe('C');
     });
+
+
+    it("should include multiple objects",function(){
+        var m1 = {
+            included:function(){},
+            method1:function(){}
+        };
+
+        var m2 = {
+            included:function(){},
+            method2:function(){}
+        };
+
+        var s1 = sinon.spy(m1,'included');
+        var s2 = sinon.spy(m2,'included');
+
+        var D = jii.Module('D').include(m1,m2);
+
+        var d = new D();
+        
+
+        expect(s1).toHaveBeenCalled();
+        expect(s2).toHaveBeenCalled();
+        expect(d).toHaveMethods('method1','method2');
+
+    });
+
+
 
 });

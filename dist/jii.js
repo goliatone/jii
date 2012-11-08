@@ -1,8 +1,8 @@
-/*! Jii - v0.1.0 - 2012-11-07
+/*! Jii - v0.1.10 - 2012-11-07
 * http://goliatone.github.com/jii/
 * Copyright (c) 2012 goliatone;
  Licensed MIT, GPL */
-var VERSION = "0.1.0";
+var VERSION = "0.1.10";
 var jii = (function(namespace){
 
 
@@ -233,7 +233,7 @@ jii.utils = {
     //------------------------------
     // Adding class/static properties: i.e: User.findByPk().
         self.extend = function(obj, target){
-            target = target || self;
+            /*target = target || self;
             var extended = obj.extended;
             for(var i in obj){
                 if(obj.hasOwnProperty(i))
@@ -241,6 +241,31 @@ jii.utils = {
             }
 
             if(extended) extended.call(target,target);
+            return self;*/
+
+            var args;
+            if(arguments.length > 2 ){
+                target = obj;
+                args = Array.prototype.splice.call(arguments,0);
+            } else {
+                args = [obj];
+            }
+
+            target = target || self;
+            var _extend = function(){
+                var extended = obj.extended;
+                for(var i in obj){
+                    if(obj.hasOwnProperty(i))
+                        target[i] = obj[i];
+                }
+
+                if(extended) extended.call(target,target);
+            };
+                
+            var i = 0, t = args.length;
+            for(;i<t;i++){
+                _extend(args[i]);
+            }
 
             return target;
         };
@@ -254,13 +279,20 @@ jii.utils = {
          * @param   Object  Template with properties to include.
          * @return  Object  Instance, fluid interface.
          */
-        self.include = function(obj){
-            var included = obj.included;
-            for(var i in obj){
-                if(obj.hasOwnProperty(i))
-                    self.fn[i] = obj[i];
+        self.include = function(){
+            var _include = function(obj){
+                var included = obj.included;
+                for(var i in obj){
+                    if(obj.hasOwnProperty(i))
+                        self.fn[i] = obj[i];
+                }
+                if(included) included.call(self.fn, self.fn);
+            };
+            
+            var i = 0, t = arguments.length;
+            for(;i<t;i++){
+                _include(arguments[i]);
             }
-            if(included) included.call(self.fn, self.fn);
 
             return self;
         };
@@ -306,17 +338,21 @@ jii.utils = {
     Module.__version__ = "0.0.1";
 
     Module.decorator = function(implementation){
+        var self = this;
         var Decorator = function(){};
         Decorator.prototype.decorate = function(){
             var i = 0,
-            t = arguments.length;
+                t = arguments.length;
             for(;i < t; i++){
-               implementation( arguments[i], this );
+               implementation( arguments[i], this);
             }
         };
 
-        return new Decorator();
+        Decorator.prototype.owner = self;
+
+        return new Decorator(self);
     };
+
 
     Module.override = function(obj, method, fn){
         obj.parent = obj.parent || {};
@@ -485,13 +521,70 @@ jii.utils = {
     namespace[exportName] = PubSub;
 
 })(jii,'PubSub', 'Module');
-
 (function(namespace, exportName, moduleName){
 	var Module = namespace[moduleName];
+
+	
+//////////////////////////////////////////////////////
+// SIMPLE LOGGER: TODO should we create it's own module?
+// also,
+//////////////////////////////////////////////////////
+	var simpleLogger = (function(){
+
+		var _label = '';
+		var _enabled = true;
+
+		var _proxyConsoleMethod = function(target, method){
+			target[method] = function(){
+				if(!_enabled) return;
+				target.log(method);
+				console[method].apply(console,arguments);
+			};
+		};
+		
+		var _formatTime = function(){
+			var d = this.d || (this.d = new Date());
+			return d.getHours()+':'+ d.getMinutes()+':'+d.getMilliseconds();
+		};
+
+		var logger = {
+			enable:function(enabled){
+				if(typeof enabled === 'undefined')
+					enabled = !_enabled;
+				_enabled = enabled;
+				return this;
+			},
+			label:function(l){
+				if(l) _label = l;
+				return this;
+			},
+			log:function(){
+				console.log('proto ',this);
+				if(!_enabled) return;
+				var label = '[ MSG: '+_label+ _formatTime()+' ]';
+				var args  = Array.prototype.splice.call(arguments,0);
+				console.log.apply(console, [label].concat(args));
+				return this;
+			}
+		};
+		var cm = ['assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error', 'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'markTimeline', 'profile', 'profileEnd', 'markTimeline', 'table', 'time', 'timeEnd', 'timeStamp', 'trace', 'warn'];
+		for(var i=0;i<cm.length;i++){
+			_proxyConsoleMethod(logger, cm[i]);
+		}
+
+		return logger;
+	})();
 
 	var pubsub = namespace.PubSub.mixins['pubsub'];
 	var BaseModule = Module(exportName).include(pubsub);
 
+	BaseModule.log = simpleLogger.log;
+	BaseModule.logger = simpleLogger;
+
+	BaseModule.prototype.logger = simpleLogger;
+	BaseModule.prototype.log = BaseModule.fn.logger.log;
+
+	namespace[exportName] = BaseModule;
 
 })(jii, 'BaseModule','Module');
 //TODO: Unify interface with localstorage
@@ -499,7 +592,7 @@ jii.utils = {
 
     var Module = namespace[moduleName];
 
-    var REST = Module(exportName);
+    var REST = Module(exportName, 'BaseModule');
 
     /**
      * Create action map object.
@@ -570,8 +663,8 @@ jii.utils = {
             dataFilter:function(data, type){
                 return (/\S/).test(data) ? data : undefined;
             },
-            error:service.proxy(service.onError, model, options),
-            success:service.proxy(service.onSuccess, model, options)
+            error:service.proxy(service.onError, action, model, options),
+            success:service.proxy(service.onSuccess, action, model, options)
         };
 
         return settings;
@@ -639,15 +732,20 @@ jii.utils = {
     };
 
 
-    REST.prototype.onSuccess = function(model, options, data, textStatus, jqXHR){
+    REST.prototype.onSuccess = function(action, model, options, data, textStatus, jqXHR){
         
+        this.publish(action+":success", data, model, jqXHR, textStatus);
+
         if(options && options.onSuccess){
             options.onSuccess(data, model, jqXHR, textStatus);
         }
     };
 
 
-    REST.prototype.onError = function(model, options, jqXHR, textStatus, errorThrown){
+    REST.prototype.onError = function(action, model, options, jqXHR, textStatus, errorThrown){
+        
+        this.publish(action+":error", model, jqXHR, textStatus);
+
         //TODO, how do we handle this? We should push to the
         //validation? etc...
 
@@ -657,20 +755,20 @@ jii.utils = {
 
     };
 
-    REST.prototype.create = function(model, options, callback){
-        return this.service('create', model, options, callback);
+    REST.prototype.create = function(model, options){
+        return this.service('create', model, options);
     };
 
-    REST.prototype.read = function(model, options, callback){
-        return this.service('read', model, options, callback);
+    REST.prototype.read = function(model, options){
+        return this.service('read', model, options);
     };
 
-    REST.prototype.update = function(model, options, callback){
-        return this.service('update', model, options, callback);
+    REST.prototype.update = function(model, options){
+        return this.service('update', model, options);
     };
 
-    REST.prototype.destroy = function(model, options, callback){
-        return this.service('destroy', model, options, callback);
+    REST.prototype.destroy = function(model, options){
+        return this.service('destroy', model, options);
     };
 
     REST.prototype.handle302 = function(){
@@ -799,7 +897,7 @@ jii.utils = {
      *       them to the model instance. So they can be accessed
      *       with modelInstance.fields()
      */
-    var Model = Module( exportName ).extend({
+    var Model = Module( exportName, 'BaseModule' ).extend({
         records:{},
         grecords:{},
         attributes:[],
@@ -1102,10 +1200,10 @@ jii.utils = {
             this.ctor.add(this);
 
         },
-        log:function(){
+        /*log:function(){
             if(this.debug === false || !window.console) return;
             window.console.log.apply(window.console, arguments);
-        },
+        },*/
     ////////////////////////////////////////////////////////
     //// VALIDATION: Todo, move to it's own module.
     ////////////////////////////////////////////////////////
@@ -1372,7 +1470,7 @@ jii.utils = {
         }
     });
     
-    Model.include(namespace.PubSub.mixins['pubsub']);
+    // Model.include(namespace.PubSub.mixins['pubsub']);
 
     //TODO: Parse attributes, we want to have stuff
     //like attribute type, and validation info.
@@ -1429,18 +1527,22 @@ jii.utils = {
             return options;
         },
         onError:function(model, errorThrown, xhr, statusText){
-            console.log(this.__name__+' error: '+errorThrown, ' status ', statusText);
+            this.log(this.__name__+' error: '+errorThrown, ' status ', statusText);
         },
         getService:function(){
             if(!this._service)
-                this._service = new jii.REST();
+                //TODO: Global dependency!
+                this.setService(new jii.REST());
+
             return this._service;
         },
-        setService:function(factory){
+        setService:function(service){
             //
-            var args = Array.prototype.slice.call(arguments,1);
-            args.unshift(this);
-            this._service = factory.apply(factory, args);
+            // var args = Array.prototype.slice.call(arguments,1);
+            // args.unshift(this);
+            // this._service = factory.apply(factory, args);
+            this._service = service;
+            // this._service.subscribe()
 
             return this;
         },
@@ -1465,6 +1567,9 @@ jii.utils = {
             //update/create here!
             options.skipSync = true;
             return record.save(options);
+        },
+        load:function(attributes){
+            return new this(attributes);
         },
         destroy:function(id, options){
             var record = this.find(id);
@@ -1797,7 +1902,7 @@ jii.utils = {
         return Object.prototype.toString.call(value) === '[object Array]';
     };
 
-    var LocalStore = Module(exportName).include({
+    var LocalStore = Module(exportName, 'BaseModule').include({
         init:function init(ModelModule){
             this.modelModule  = ModelModule;
             this.collectionId = ModelModule.__name__+"-collection";
@@ -1869,7 +1974,4 @@ jii.utils = {
     namespace[exportName] = available ? LocalStore : noLocalStore;
 
 })(jii, 'LocalStore', 'Module');
-
-return jii;
-
 })("jii");
