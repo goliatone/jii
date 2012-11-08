@@ -110,9 +110,13 @@ describe("PubSub", function(){
 	it("shoud include all event props into the options parameter",function(){
 
 		//SHOULD WE MAKE THIS A FEATURE OR A BUG?!
-		
+		//for now, we leave it as it is.
 		var handler = {};
 		handler.onTopic = function(options){
+			console.log('*****************');
+			console.log(arguments);
+			console.log('*****************');
+
 			handler.id = this.id;
 			options.age++;
 			expect(options.age).toBe(2);
@@ -120,7 +124,10 @@ describe("PubSub", function(){
 		};
 		handler.onTopicTwo = function(options){
 			options.age++;
-			expect(options.age).toBe(2);
+			expect(options.age).toBe(3);
+			console.log('*****************');
+			console.log(arguments);
+			console.log('*****************');
 		};
 
 		var spy = sinon.spy(handler, 'onTopic');
@@ -129,7 +136,7 @@ describe("PubSub", function(){
 		item.subscribe('topic', handler.onTopic);
 		item.subscribe('topic',handler.onTopicTwo);
 
-		item.publish('topic',{age:1});
+		item.publish('topic', {age:1});
 
 		expect(spy).toHaveBeenCalledOnce();
 		expect(spy.returned(item)).toBeTruthy();

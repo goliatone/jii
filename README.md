@@ -20,8 +20,24 @@ In your web page:
 ```
 
 ## Roadmap, TODO:
--  Compact modules in single file.
+### Milestone 1:
+-  ~~Add BaseModule that has PubSub and core functionality: i.e logger.~~
+-  ~~REST and LocalStorage should extend BaseModule.~~
+-  Remove callbacks, use events!
+-  Trim methods, loose fat: Model/ActiveRecord.
+-  Compact modules in single file. i.e: _How to structure the dist module._
 
+### Milestone 2:
+-  Add Controllers.
+-  Add a simple Router.
+-  Add URL/QueryString helper modules.
+-  Add AppModule.
+
+### Milestone 3:
+-  Create simple MVC structure.
+
+## BUGS:
+-  review init method, called with _super.
 
 ## Documentation
 _(Coming soon)_

@@ -3,7 +3,7 @@
 
     var Module = namespace[moduleName];
 
-    var REST = Module(exportName);
+    var REST = Module(exportName, 'BaseModule');
 
     /**
      * Create action map object.

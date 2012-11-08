@@ -53,7 +53,7 @@
     //------------------------------
     // Adding class/static properties: i.e: User.findByPk().
         self.extend = function(obj, target){
-            target = target || self;
+            /*target = target || self;
             var extended = obj.extended;
             for(var i in obj){
                 if(obj.hasOwnProperty(i))
@@ -61,6 +61,31 @@
             }
 
             if(extended) extended.call(target,target);
+            return self;*/
+
+            var args;
+            if(arguments.length > 2 ){
+                target = obj;
+                args = Array.prototype.splice.call(arguments,0);
+            } else {
+                args = [obj];
+            }
+
+            target = target || self;
+            var _extend = function(){
+                var extended = obj.extended;
+                for(var i in obj){
+                    if(obj.hasOwnProperty(i))
+                        target[i] = obj[i];
+                }
+
+                if(extended) extended.call(target,target);
+            };
+                
+            var i = 0, t = args.length;
+            for(;i<t;i++){
+                _extend(args[i]);
+            }
 
             return target;
         };
@@ -74,13 +99,20 @@
          * @param   Object  Template with properties to include.
          * @return  Object  Instance, fluid interface.
          */
-        self.include = function(obj){
-            var included = obj.included;
-            for(var i in obj){
-                if(obj.hasOwnProperty(i))
-                    self.fn[i] = obj[i];
+        self.include = function(){
+            var _include = function(obj){
+                var included = obj.included;
+                for(var i in obj){
+                    if(obj.hasOwnProperty(i))
+                        self.fn[i] = obj[i];
+                }
+                if(included) included.call(self.fn, self.fn);
+            };
+            
+            var i = 0, t = arguments.length;
+            for(;i<t;i++){
+                _include(arguments[i]);
             }
-            if(included) included.call(self.fn, self.fn);
 
             return self;
         };
@@ -126,17 +158,21 @@
     Module.__version__ = "0.0.1";
 
     Module.decorator = function(implementation){
+        var self = this;
         var Decorator = function(){};
         Decorator.prototype.decorate = function(){
             var i = 0,
-            t = arguments.length;
+                t = arguments.length;
             for(;i < t; i++){
-               implementation( arguments[i], this );
+               implementation( arguments[i], this);
             }
         };
 
-        return new Decorator();
+        Decorator.prototype.owner = self;
+
+        return new Decorator(self);
     };
+
 
     Module.override = function(obj, method, fn){
         obj.parent = obj.parent || {};

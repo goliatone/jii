@@ -31,7 +31,7 @@ jii.utils = {
         var a = Array.prototype.splice.call(args,0);
 
         if(!a[1] &&
-           _isArray(a[0]) &&
+           this.isArray(a[0]) &&
            a.length === 1) return a[0];
 
         return a;
@@ -114,6 +114,7 @@ jii.utils = {
     },
     ensureNamespace:function(namespace, scope)
     {
+        var target;
         scope = scope || jii;
         namespace = namespace.split('.');
         while((target = namespace.shift()))
@@ -124,7 +125,7 @@ jii.utils = {
             scope = scope[target];
         }
 
-        return scope['target'];
+        return scope;
     },
     resolvePropertyChain:function(target, chain){
         if (!chain && typeof target === 'string') {
@@ -145,15 +146,15 @@ jii.utils = {
         var names = fn.toString().match(/^[\s\(]*function[^(]*\(([^)]*)\)/)[1]
           .replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
           .replace(/\s+/g, '').split(',');
-        return names.length == 1 && !names[0] ? [] : names;
+        return names.length === 1 && !names[0] ? [] : names;
     },
     truncate:function(str,len, suffix)
     {
-        if(typeof str == 'undefined') return '';
+        if(typeof str === 'undefined') return '';
         if(!str) return '';
         
         if(isNaN(len)) len = 50;
-        if(typeof suffix == 'undefined') suffix = '...';
+        if(typeof suffix === 'undefined') suffix = '...';
         
         len -= suffix.length;
         var trunc = str;
