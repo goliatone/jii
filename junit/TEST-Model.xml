@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <testsuites>
-<testsuite name="Model" errors="0" tests="27" failures="0" time="0.034" timestamp="[object Object]">
+<testsuite name="Model" errors="0" tests="27" failures="0" time="0.033" timestamp="[object Object]">
   <testcase classname="Model" name="should create a User model class" time="0.001"></testcase>
   <testcase classname="Model" name="should assing a modelName to an instance on creation" time="0.001"></testcase>
-  <testcase classname="Model" name="should assing a modelId to an instance on creation" time="0.002"></testcase>
+  <testcase classname="Model" name="should assing a modelId to an instance on creation" time="0.001"></testcase>
   <testcase classname="Model" name="should create attributes in model instance" time="0.001"></testcase>
   <testcase classname="Model" name="should call init method on instances on the constructor" time="0.001"></testcase>
-  <testcase classname="Model" name="should load constructor attributes" time="0.001"></testcase>
+  <testcase classname="Model" name="should load constructor attributes" time="0.002"></testcase>
   <testcase classname="Model" name="after load, attributes should be assigned to the instance" time="0.001"></testcase>
-  <testcase classname="Model" name="should assing a new gid on creation" time="0"></testcase>
-  <testcase classname="Model" name="should track new recrods" time="0"></testcase>
-  <testcase classname="Model" name="instance need an id to be considered a record" time="0.001"></testcase>
-  <testcase classname="Model" name="should not assing a gid as id on create if none present" time="0.002"></testcase>
-  <testcase classname="Model" name="should publish topics on create" time="0.002"></testcase>
+  <testcase classname="Model" name="should assing a new gid on creation" time="0.001"></testcase>
+  <testcase classname="Model" name="should track new recrods" time="0.001"></testcase>
+  <testcase classname="Model" name="instance need an id to be considered a record" time="0"></testcase>
+  <testcase classname="Model" name="should not assing a gid as id on create if none present" time="0.001"></testcase>
+  <testcase classname="Model" name="should publish topics on create" time="0.001"></testcase>
   <testcase classname="Model" name="should publish topics on create with the given options" time="0.001"></testcase>
   <testcase classname="Model" name="should be loadable from JSON" time="0.001"></testcase>
-  <testcase classname="Model" name="should reload an item and reset its state" time="0.002"></testcase>
+  <testcase classname="Model" name="should reload an item and reset its state" time="0.003"></testcase>
   <testcase classname="Model" name="duplicate should return a record with shared props, but with no id and different gid" time="0.001"></testcase>
-  <testcase classname="Model" name="should duplicate a record with same id and gid" time="0.001"></testcase>
-  <testcase classname="Model" name="should publish individual attribute changes: updateAttribute" time="0.002"></testcase>
+  <testcase classname="Model" name="should duplicate a record with same id and gid" time="0.002"></testcase>
+  <testcase classname="Model" name="should publish individual attribute changes: updateAttribute" time="0.001"></testcase>
   <testcase classname="Model" name="should publish individual attribute changes: set" time="0.001"></testcase>
   <testcase classname="Model" name="should clone records" time="0.001"></testcase>
-  <testcase classname="Model" name="new records should not be equal" time="0.002"></testcase>
+  <testcase classname="Model" name="new records should not be equal" time="0.001"></testcase>
   <testcase classname="Model" name="User should store created instances." time="0.001"></testcase>
   <testcase classname="Model" name="User should track records without id as ghost instances." time="0.001"></testcase>
-  <testcase classname="Model" name="We should be able to add records to User" time="0.001"></testcase>
+  <testcase classname="Model" name="We should be able to add records to User" time="0.002"></testcase>
   <testcase classname="Model" name="should be able to add a record form JSON" time="0.001"></testcase>
-  <testcase classname="Model" name="User should be able to get instances by id or gid" time="0.001"></testcase>
+  <testcase classname="Model" name="User should be able to get instances by id or gid" time="0"></testcase>
   <testcase classname="Model" name="User should remove users" time="0.001"></testcase>
 </testsuite>
 </testsuites>

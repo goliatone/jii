@@ -205,10 +205,13 @@ describe("ActiveRecord", function(){
         requests = [];
         xhr.onCreate = function (req) { requests.push(req); };
 
-        var user = User.create(models[0]);
+        var user = User.load(models[0]);
         user.age = 99;
         user.save();
         expect(requests.length).toBe(1);
+        console.log('*************');
+        console.log(requests);
+        console.log('*************');
         expect(requests[0].method).toMatchObject('PUT');
         expect(requests[0].url).toMatchObject('/api/user/'+user.id);
     });

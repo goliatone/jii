@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <testsuites>
-<testsuite name="ActiveRecord" errors="0" tests="22" failures="1" time="0.07" timestamp="[object Object]">
-  <testcase classname="ActiveRecord" name="should register a set of records" time="0.011"></testcase>
+<testsuite name="ActiveRecord" errors="0" tests="22" failures="0" time="0.07" timestamp="[object Object]">
+  <testcase classname="ActiveRecord" name="should register a set of records" time="0.01"></testcase>
   <testcase classname="ActiveRecord" name="should register a set of models" time="0.002"></testcase>
   <testcase classname="ActiveRecord" name="should find users by id" time="0.002"></testcase>
-  <testcase classname="ActiveRecord" name="should find users by gid" time="0.002"></testcase>
-  <testcase classname="ActiveRecord" name="should find users by attribute" time="0.001"></testcase>
-  <testcase classname="ActiveRecord" name="should find all users by attribute" time="0.002"></testcase>
-  <testcase classname="ActiveRecord" name="should delete all records" time="0.001"></testcase>
-  <testcase classname="ActiveRecord" name="Should create models from POJOs" time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="should find users by gid" time="0.003"></testcase>
+  <testcase classname="ActiveRecord" name="should find users by attribute" time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="should find all users by attribute" time="0.001"></testcase>
+  <testcase classname="ActiveRecord" name="should delete all records" time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="Should create models from POJOs" time="0.001"></testcase>
   <testcase classname="ActiveRecord" name="should select items using a filter method" time="0.002"></testcase>
-  <testcase classname="ActiveRecord" name="should create new models from POJOs" time="0.006"></testcase>
-  <testcase classname="ActiveRecord" name="should destroy a record" time="0.005"></testcase>
+  <testcase classname="ActiveRecord" name="should create new models from POJOs" time="0.007"></testcase>
+  <testcase classname="ActiveRecord" name="should destroy a record" time="0.004"></testcase>
   <testcase classname="ActiveRecord" name="beforeDestroy should allow us to abort destruction :)" time="0.002"></testcase>
   <testcase classname="ActiveRecord" name="should check if a model exists" time="0.002"></testcase>
-  <testcase classname="ActiveRecord" name="should update new models" time="0.002"></testcase>
-  <testcase classname="ActiveRecord" name="should sync with server: fetch" time="0.004"></testcase>
-  <testcase classname="ActiveRecord" name="should sync with server: create" time="0.003"></testcase>
-  <testcase classname="ActiveRecord" name="should sync with server: update" time="0.004"><failure>1: Expected 2 to be 1.</failure></testcase>
-  <testcase classname="ActiveRecord" name="should sync with server: delete" time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="should update new models" time="0.004"></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server: fetch" time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server: create" time="0.005"></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server: update" time="0.003"></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server: delete" time="0.001"></testcase>
   <testcase classname="ActiveRecord" name="should sync with server data:fetch all" time="0.005"></testcase>
-  <testcase classname="ActiveRecord" name="should sync with server data: fetch by id " time="0.002"></testcase>
+  <testcase classname="ActiveRecord" name="should sync with server data: fetch by id " time="0.003"></testcase>
   <testcase classname="ActiveRecord" name="should sync with server data: create" time="0.002"></testcase>
   <testcase classname="ActiveRecord" name="should sync with server data: update" time="0.003"></testcase>
 </testsuite>
